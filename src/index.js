@@ -5,6 +5,7 @@ const urlLib = require('url');
 const normalizeUrl = require('normalize-url');
 const getStream = require('get-stream');
 const CachePolicy = require('http-cache-semantics');
+const urlParseLax = require('url-parse-lax');
 
 const cacheKey = opts => {
 	const url = normalizeUrl(urlLib.format(opts));
@@ -12,6 +13,9 @@ const cacheKey = opts => {
 };
 
 const cacheableRequest = (request, cache) => (opts, cb) => {
+  if (typeof opts === 'string') {
+    opts = urlParseLax(opts);
+  }
 	opts = Object.assign({
     headers: {},
     method: 'GET'
