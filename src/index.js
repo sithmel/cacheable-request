@@ -57,9 +57,8 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 
 		const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
 		if (policy.satisfiesWithoutRevalidation(opts)) {
-			const { statusCode, body, url } = cacheEntry;
 			const headers = policy.responseHeaders();
-			const response = new Response(statusCode, headers, body, url);
+			const response = new Response(cacheEntry.statusCode, headers, cacheEntry.body, cacheEntry.url);
 			response.cachePolicy = policy;
 			response.fromCache = true;
 
