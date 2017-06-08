@@ -32,7 +32,11 @@
     "url": "https://github.com/lukechilds/cacheable-request/issues"
   },
   "homepage": "https://github.com/lukechilds/cacheable-request",
-  "dependencies": {},
+  "dependencies": {
+    "get-stream": "^3.0.0",
+    "http-cache-semantics": "^3.7.3",
+    "normalize-url": "^1.9.1"
+  },
   "devDependencies": {
     "ava": "^0.19.1",
     "coveralls": "^2.13.1",
