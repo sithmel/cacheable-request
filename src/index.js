@@ -69,7 +69,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 		}
 	});
 
-	setImmediate(() => get(opts));
+	get(opts);
 
 	return ee;
 };
