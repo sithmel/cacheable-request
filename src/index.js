@@ -25,7 +25,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 	const ee = new EventEmitter();
 	const key = cacheKey(opts);
 
-	const makeRequest = (opts, cb) => {
+	const makeRequest = opts => {
 		const req = request(opts, response => {
 			response.cachePolicy = new CachePolicy(opts, response);
 			response.fromCache = false;
