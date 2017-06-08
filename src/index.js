@@ -6,6 +6,7 @@ const normalizeUrl = require('normalize-url');
 const getStream = require('get-stream');
 const CachePolicy = require('http-cache-semantics');
 const urlParseLax = require('url-parse-lax');
+const Response = require('responselike');
 
 const cacheKey = opts => {
 	const url = normalizeUrl(urlLib.format(opts));
@@ -22,14 +23,15 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 	}, opts);
 
 	const ee = new EventEmitter();
+	const key = cacheKey(opts);
 
-	const get = opts => {
+	const makeRequest = (opts, cb) => {
 		const req = request(opts, response => {
 			response.cachePolicy = new CachePolicy(opts, response);
+			response.fromCache = false;
 
 			if (cache && response.cachePolicy.storable()) {
 				getStream.buffer(response).then(body => {
-					const key = cacheKey(opts);
 					const value = {
 						cachePolicy: response.cachePolicy.toObject(),
 						url: response.url,
@@ -47,6 +49,25 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 		});
 		ee.emit('request', req);
 	};
+
+	const get = opts => Promise.resolve(cache.get(key)).then(cacheEntry => {
+		if (typeof cacheEntry === 'undefined') {
+			return makeRequest(opts, cb);
+		}
+
+		const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
+		if (policy.satisfiesWithoutRevalidation(opts)) {
+			const { statusCode, body, url } = cacheEntry;
+			const headers = policy.responseHeaders();
+			const response = new Response(statusCode, headers, body, url);
+			response.cachePolicy = policy;
+			response.fromCache = true;
+
+			if (typeof cb === 'function') {
+				cb(response);
+			}
+		}
+	});
 
 	setImmediate(() => get(opts));
 
