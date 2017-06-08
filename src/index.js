@@ -13,13 +13,13 @@ const cacheKey = opts => {
 };
 
 const cacheableRequest = (request, cache) => (opts, cb) => {
-  if (typeof opts === 'string') {
-    opts = urlParseLax(opts);
-  }
+	if (typeof opts === 'string') {
+		opts = urlParseLax(opts);
+	}
 	opts = Object.assign({
-    headers: {},
-    method: 'GET'
-  }, opts);
+		headers: {},
+		method: 'GET'
+	}, opts);
 
 	const ee = new EventEmitter();
 
