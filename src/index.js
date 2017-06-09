@@ -29,8 +29,20 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 
 	const makeRequest = opts => {
 		const req = request(opts, response => {
-			response.cachePolicy = new CachePolicy(opts, response);
-			response.fromCache = false;
+			if (opts._revalidate) {
+				const revalidatedPolicy = CachePolicy.fromObject(opts._revalidate.cachePolicy).revalidatedPolicy(opts, response);
+				if (!revalidatedPolicy.modified) {
+					const headers = revalidatedPolicy.policy.responseHeaders();
+					response = new Response(opts._revalidate.statusCode, headers, opts._revalidate.body, opts._revalidate.url);
+					response.cachePolicy = revalidatedPolicy.policy;
+					response.fromCache = true;
+				}
+			}
+
+			if (!response.fromCache) {
+				response.cachePolicy = new CachePolicy(opts, response);
+				response.fromCache = false;
+			}
 
 			if (cache && response.cachePolicy.storable()) {
 				getStream.buffer(response).then(body => {
@@ -67,6 +79,10 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 			if (typeof cb === 'function') {
 				cb(response);
 			}
+		} else {
+			opts._revalidate = cacheEntry;
+			opts.headers = policy.revalidationHeaders(opts);
+			makeRequest(opts);
 		}
 	});
 
