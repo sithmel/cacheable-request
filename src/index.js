@@ -7,6 +7,7 @@ const getStream = require('get-stream');
 const CachePolicy = require('http-cache-semantics');
 const urlParseLax = require('url-parse-lax');
 const Response = require('responselike');
+const lowercaseKeys = require('lowercase-keys');
 
 const cacheKey = opts => {
 	const url = normalizeUrl(urlLib.format(opts));
@@ -21,6 +22,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 		headers: {},
 		method: 'GET'
 	}, opts);
+	opts.headers = lowercaseKeys(opts.headers);
 
 	const ee = new EventEmitter();
 	const key = cacheKey(opts);
