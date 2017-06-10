@@ -58,6 +58,8 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 					const ttl = response.cachePolicy.timeToLive();
 					cache.set(key, value, ttl);
 				});
+			} else if (opts._revalidate) {
+				opts.cache.delete(key);
 			}
 
 			if (typeof cb === 'function') {
