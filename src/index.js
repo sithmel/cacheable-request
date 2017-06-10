@@ -5,7 +5,6 @@ const urlLib = require('url');
 const normalizeUrl = require('normalize-url');
 const getStream = require('get-stream');
 const CachePolicy = require('http-cache-semantics');
-const urlParseLax = require('url-parse-lax');
 const Response = require('responselike');
 const lowercaseKeys = require('lowercase-keys');
 const cloneResponse = require('clone-response');
@@ -17,7 +16,7 @@ const cacheKey = opts => {
 
 const cacheableRequest = (request, opts, cb) => {
 	if (typeof opts === 'string') {
-		opts = urlParseLax(opts);
+		opts = urlLib.parse(opts);
 	}
 	opts = Object.assign({
 		headers: {},

@@ -38,8 +38,7 @@
     "http-cache-semantics": "^3.7.3",
     "lowercase-keys": "^1.0.0",
     "normalize-url": "^1.9.1",
-    "responselike": "^0.1.0",
-    "url-parse-lax": "^1.0.0"
+    "responselike": "^0.1.0"
   },
   "devDependencies": {
     "ava": "^0.19.1",
