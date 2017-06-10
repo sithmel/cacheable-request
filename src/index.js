@@ -15,7 +15,7 @@ const cacheKey = opts => {
 	return `${opts.method}:${url}`;
 };
 
-const cacheableRequest = (request, cache) => (opts, cb) => {
+const cacheableRequest = (request, opts, cb) => {
 	if (typeof opts === 'string') {
 		opts = urlParseLax(opts);
 	}
@@ -46,7 +46,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 			}
 
 			let clonedResponse;
-			if (cache && response.cachePolicy.storable()) {
+			if (opts.cache && response.cachePolicy.storable()) {
 				clonedResponse = cloneResponse(response);
 				getStream.buffer(response).then(body => {
 					const value = {
@@ -56,7 +56,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 						body
 					};
 					const ttl = response.cachePolicy.timeToLive();
-					cache.set(key, value, ttl);
+					opts.cache.set(key, value, ttl);
 				});
 			} else if (opts._revalidate) {
 				opts.cache.delete(key);
@@ -69,7 +69,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 		ee.emit('request', req);
 	};
 
-	const get = opts => Promise.resolve(cache.get(key)).then(cacheEntry => {
+	const get = opts => Promise.resolve(opts.cache.get(key)).then(cacheEntry => {
 		if (typeof cacheEntry === 'undefined') {
 			return makeRequest(opts, cb);
 		}
