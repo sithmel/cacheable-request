@@ -58,7 +58,7 @@ const cacheableRequest = (request, opts, cb) => {
 					const ttl = response.cachePolicy.timeToLive();
 					opts.cache.set(key, value, ttl);
 				});
-			} else if (opts._revalidate) {
+			} else if (opts.cache && opts._revalidate) {
 				opts.cache.delete(key);
 			}
 
@@ -69,7 +69,7 @@ const cacheableRequest = (request, opts, cb) => {
 		ee.emit('request', req);
 	};
 
-	const get = opts => Promise.resolve(opts.cache.get(key)).then(cacheEntry => {
+	const get = opts => Promise.resolve(opts.cache ? opts.cache.get(key) : undefined).then(cacheEntry => {
 		if (typeof cacheEntry === 'undefined') {
 			return makeRequest(opts, cb);
 		}
