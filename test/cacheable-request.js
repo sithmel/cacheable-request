@@ -1,4 +1,3 @@
-import { request } from 'http';
 import test from 'ava';
 import cacheableRequest from '../';
 
