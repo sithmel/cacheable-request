@@ -27,14 +27,15 @@ const cacheableRequest = (request, opts, cb) => {
 
 	const ee = new EventEmitter();
 	const key = cacheKey(opts);
+	let revalidate = false;
 
 	const makeRequest = opts => {
 		const req = request(opts, response => {
-			if (opts._revalidate) {
-				const revalidatedPolicy = CachePolicy.fromObject(opts._revalidate.cachePolicy).revalidatedPolicy(opts, response);
+			if (revalidate) {
+				const revalidatedPolicy = CachePolicy.fromObject(revalidate.cachePolicy).revalidatedPolicy(opts, response);
 				if (!revalidatedPolicy.modified) {
 					const headers = revalidatedPolicy.policy.responseHeaders();
-					response = new Response(response.statusCode, headers, opts._revalidate.body, opts._revalidate.url);
+					response = new Response(response.statusCode, headers, revalidate.body, revalidate.url);
 					response.cachePolicy = revalidatedPolicy.policy;
 					response.fromCache = true;
 				}
@@ -52,13 +53,13 @@ const cacheableRequest = (request, opts, cb) => {
 					const value = {
 						cachePolicy: response.cachePolicy.toObject(),
 						url: response.url,
-						statusCode: response.fromCache ? opts._revalidate.statusCode : response.statusCode,
+						statusCode: response.fromCache ? revalidate.statusCode : response.statusCode,
 						body
 					};
 					const ttl = response.cachePolicy.timeToLive();
 					opts.cache.set(key, value, ttl);
 				});
-			} else if (opts.cache && opts._revalidate) {
+			} else if (opts.cache && revalidate) {
 				opts.cache.delete(key);
 			}
 
@@ -85,7 +86,7 @@ const cacheableRequest = (request, opts, cb) => {
 				cb(response);
 			}
 		} else {
-			opts._revalidate = cacheEntry;
+			revalidate = cacheEntry;
 			opts.headers = policy.revalidationHeaders(opts);
 			makeRequest(opts);
 		}
