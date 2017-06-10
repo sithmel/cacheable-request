@@ -8,6 +8,7 @@ const CachePolicy = require('http-cache-semantics');
 const urlParseLax = require('url-parse-lax');
 const Response = require('responselike');
 const lowercaseKeys = require('lowercase-keys');
+const cloneResponse = require('clone-response');
 
 const cacheKey = opts => {
 	const url = normalizeUrl(urlLib.format(opts));
@@ -44,7 +45,9 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 				response.fromCache = false;
 			}
 
+			let clonedResponse;
 			if (cache && response.cachePolicy.storable()) {
+				clonedResponse = cloneResponse(response);
 				getStream.buffer(response).then(body => {
 					const value = {
 						cachePolicy: response.cachePolicy.toObject(),
@@ -58,7 +61,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 			}
 
 			if (typeof cb === 'function') {
-				cb(response);
+				cb(clonedResponse || response);
 			}
 		});
 		ee.emit('request', req);
