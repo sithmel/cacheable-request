@@ -3,6 +3,7 @@ import url from 'url';
 import test from 'ava';
 import getStream from 'get-stream';
 import createTestServer from 'create-test-server';
+import delay from 'delay';
 import cacheableRequest from '../';
 
 let s;
@@ -52,6 +53,19 @@ test.before('setup', async () => {
 		res.setHeader('Cache-Control', 'public, max-age=0');
 		res.setHeader('ETag', '33a64df551425fcc55e4d42a148795d9f25f89d4');
 		let responseBody = 'etag';
+
+		if (req.headers['if-none-match'] === '33a64df551425fcc55e4d42a148795d9f25f89d4') {
+			res.statusCode = 304;
+			responseBody = null;
+		}
+
+		res.end(responseBody);
+	});
+
+	s.get('/etag-cache-1s', (req, res) => {
+		res.setHeader('Cache-Control', 'public, max-age=1');
+		res.setHeader('ETag', '33a64df551425fcc55e4d42a148795d9f25f89d4');
+		let responseBody = 'etag-cache-1s';
 
 		if (req.headers['if-none-match'] === '33a64df551425fcc55e4d42a148795d9f25f89d4') {
 			res.statusCode = 304;
@@ -164,6 +178,23 @@ test('Response objects have fromCache property set correctly', async t => {
 
 	t.false(response.fromCache);
 	t.true(cachedResponse.fromCache);
+});
+
+test('Revalidated responses that are re-cached return 304 but 200 on subsequent cache responses', async t => {
+	const endpoint = '/etag-cache-1s';
+	const cache = new Map();
+
+	const firstResponse = await cacheableRequestHelper(endpoint, cache);
+	await delay(1100);
+	const secondResponse = await cacheableRequestHelper(endpoint, cache);
+	const thirdResponse = await cacheableRequestHelper(endpoint, cache);
+
+	t.is(firstResponse.statusCode, 200);
+	t.false(firstResponse.fromCache);
+	t.is(secondResponse.statusCode, 304);
+	t.true(secondResponse.fromCache);
+	t.is(thirdResponse.statusCode, 200);
+	t.true(thirdResponse.fromCache);
 });
 
 test.after('cleanup', async () => {
