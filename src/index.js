@@ -34,7 +34,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 				const revalidatedPolicy = CachePolicy.fromObject(opts._revalidate.cachePolicy).revalidatedPolicy(opts, response);
 				if (!revalidatedPolicy.modified) {
 					const headers = revalidatedPolicy.policy.responseHeaders();
-					response = new Response(opts._revalidate.statusCode, headers, opts._revalidate.body, opts._revalidate.url);
+					response = new Response(response.statusCode, headers, opts._revalidate.body, opts._revalidate.url);
 					response.cachePolicy = revalidatedPolicy.policy;
 					response.fromCache = true;
 				}
@@ -52,7 +52,7 @@ const cacheableRequest = (request, cache) => (opts, cb) => {
 					const value = {
 						cachePolicy: response.cachePolicy.toObject(),
 						url: response.url,
-						statusCode: response.statusCode,
+						statusCode: response.fromCache ? opts._revalidate.statusCode : response.statusCode,
 						body
 					};
 					const ttl = response.cachePolicy.timeToLive();
