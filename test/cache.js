@@ -10,7 +10,7 @@ let s;
 
 // Simple wrapper that returns a promise, reads stream and sets up some options
 const cacheableRequestHelper = (path, cache) => new Promise(resolve => {
-	const opts = Object.assign({}, url.parse(s.url), { path, cache });
+	const opts = Object.assign({}, url.parse(s.url + path), { cache });
 	cacheableRequest(request, opts, response => {
 		getStream(response).then(body => {
 			response.body = body;
