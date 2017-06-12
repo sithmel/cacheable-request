@@ -29,6 +29,15 @@ test('cacheableRequest throws TypeError if request fn isn\'t passed in', t => {
 	t.is(error.message, 'Parameter `request` must be a function');
 });
 
+test.cb('cacheableRequest passes requests through if no cache option is set', t => {
+	cacheableRequest(request, url.format(s.url), response => {
+		getStream(response).then(body => {
+			t.is(body, 'hi');
+			t.end();
+		});
+	}).on('request', req => req.end());
+});
+
 test.cb('cacheableRequest accepts url as string', t => {
 	cacheableRequest(request, s.url, response => {
 		getStream(response).then(body => {
