@@ -2,6 +2,7 @@ import EventEmitter from 'events';
 import { request } from 'http';
 import test from 'ava';
 import createTestServer from 'create-test-server';
+import getStream from 'get-stream';
 import cacheableRequest from '../';
 
 let s;
@@ -18,6 +19,15 @@ test('cacheableRequest is a function', t => {
 test.cb('cacheableRequest returns an event emitter', t => {
 	const returnValue = cacheableRequest(request, s.url, () => t.end()).on('request', req => req.end());
 	t.true(returnValue instanceof EventEmitter);
+});
+
+test.cb('cacheableRequest accepts url as string', t => {
+	cacheableRequest(request, s.url, response => {
+		getStream(response).then(body => {
+			t.is(body, 'hi');
+			t.end();
+		});
+	}).on('request', req => req.end());
 });
 
 test.after('cleanup', async () => {
