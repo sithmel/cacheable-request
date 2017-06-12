@@ -62,6 +62,19 @@ test.before('setup', async () => {
 		res.end(responseBody);
 	});
 
+	s.get('/revalidate-modified', (req, res) => {
+		res.setHeader('Cache-Control', 'public, max-age=0');
+		res.setHeader('ETag', '33a64df551425fcc55e4d42a148795d9f25f89d4');
+		let responseBody = 'revalidate-modified';
+
+		if (req.headers['if-none-match'] === '33a64df551425fcc55e4d42a148795d9f25f89d4') {
+			res.setHeader('ETag', '0000000000000000000000000000000000');
+			responseBody = 'new-body';
+		}
+
+		res.end(responseBody);
+	});
+
 	s.get('/etag-cache-1s', (req, res) => {
 		res.setHeader('Cache-Control', 'public, max-age=1');
 		res.setHeader('ETag', '33a64df551425fcc55e4d42a148795d9f25f89d4');
@@ -195,6 +208,19 @@ test('Revalidated responses that are re-cached return 304 but 200 on subsequent 
 	t.true(secondResponse.fromCache);
 	t.is(thirdResponse.statusCode, 200);
 	t.true(thirdResponse.fromCache);
+});
+
+test('Revalidated responses that are modified are passed through', async t => {
+	const endpoint = '/revalidate-modified';
+	const cache = new Map();
+
+	const firstResponse = await cacheableRequestHelper(endpoint, cache);
+	const secondResponse = await cacheableRequestHelper(endpoint, cache);
+
+	t.is(firstResponse.statusCode, 200);
+	t.is(secondResponse.statusCode, 200);
+	t.is(firstResponse.body, 'revalidate-modified');
+	t.is(secondResponse.body, 'new-body');
 });
 
 test.after('cleanup', async () => {
