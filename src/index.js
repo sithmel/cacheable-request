@@ -24,6 +24,10 @@ const cacheableRequest = (request, opts, cb) => {
 	}, opts);
 	opts.headers = lowercaseKeys(opts.headers);
 
+	if (typeof request !== 'function') {
+		throw new TypeError('Parameter `request` must be a function');
+	}
+
 	const ee = new EventEmitter();
 	const key = cacheKey(opts);
 	let revalidate = false;
