@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import { request } from 'http';
+import url from 'url';
 import test from 'ava';
 import createTestServer from 'create-test-server';
 import getStream from 'get-stream';
@@ -17,13 +18,13 @@ test('cacheableRequest is a function', t => {
 });
 
 test.cb('cacheableRequest returns an event emitter', t => {
-	const returnValue = cacheableRequest(request, s.url, () => t.end()).on('request', req => req.end());
+	const returnValue = cacheableRequest(request, url.format(s.url), () => t.end()).on('request', req => req.end());
 	t.true(returnValue instanceof EventEmitter);
 });
 
 test('cacheableRequest throws TypeError if request fn isn\'t passed in', t => {
 	const error = t.throws(() => {
-		cacheableRequest('not a request function', s.url);
+		cacheableRequest('not a request function', url.format(s.url));
 	}, TypeError);
 	t.is(error.message, 'Parameter `request` must be a function');
 });
