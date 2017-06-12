@@ -47,6 +47,16 @@ test.cb('cacheableRequest accepts url as string', t => {
 	}).on('request', req => req.end());
 });
 
+test.cb('cacheableRequest handles no callback parameter', t => {
+	cacheableRequest(request, url.format(s.url)).on('request', req => {
+		req.end();
+		req.on('response', response => {
+			t.is(response.statusCode, 200);
+			t.end();
+		});
+	});
+});
+
 test.after('cleanup', async () => {
 	await s.close();
 });
