@@ -18,19 +18,19 @@ test('cacheableRequest is a function', t => {
 });
 
 test.cb('cacheableRequest returns an event emitter', t => {
-	const returnValue = cacheableRequest(request, url.format(s.url), () => t.end()).on('request', req => req.end());
+	const returnValue = cacheableRequest(request, url.parse(s.url), () => t.end()).on('request', req => req.end());
 	t.true(returnValue instanceof EventEmitter);
 });
 
 test('cacheableRequest throws TypeError if request fn isn\'t passed in', t => {
 	const error = t.throws(() => {
-		cacheableRequest('not a request function', url.format(s.url));
+		cacheableRequest('not a request function', url.parse(s.url));
 	}, TypeError);
 	t.is(error.message, 'Parameter `request` must be a function');
 });
 
 test.cb('cacheableRequest passes requests through if no cache option is set', t => {
-	cacheableRequest(request, url.format(s.url), response => {
+	cacheableRequest(request, url.parse(s.url), response => {
 		getStream(response).then(body => {
 			t.is(body, 'hi');
 			t.end();
@@ -48,7 +48,7 @@ test.cb('cacheableRequest accepts url as string', t => {
 });
 
 test.cb('cacheableRequest handles no callback parameter', t => {
-	cacheableRequest(request, url.format(s.url)).on('request', req => {
+	cacheableRequest(request, url.parse(s.url)).on('request', req => {
 		req.end();
 		req.on('response', response => {
 			t.is(response.statusCode, 200);
