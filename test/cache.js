@@ -223,6 +223,19 @@ test('Revalidated responses that are modified are passed through', async t => {
 	t.is(secondResponse.body, 'new-body');
 });
 
+test.cb('Undefined callback parameter inside cache logic is handled', t => {
+	const endpoint = '/cache';
+	const cache = new Map();
+	const opts = Object.assign({}, url.parse(s.url + endpoint), { cache });
+
+	cacheableRequestHelper(endpoint, cache).then(() => {
+		cacheableRequest(request, opts);
+		setTimeout(() => {
+			t.end();
+		}, 500);
+	});
+});
+
 test.after('cleanup', async () => {
 	await s.close();
 });
