@@ -21,6 +21,13 @@ test.cb('cacheableRequest returns an event emitter', t => {
 	t.true(returnValue instanceof EventEmitter);
 });
 
+test('cacheableRequest throws TypeError if request fn isn\'t passed in', t => {
+	const error = t.throws(() => {
+		cacheableRequest('not a request function', s.url);
+	}, TypeError);
+	t.is(error.message, 'Parameter `request` must be a function');
+});
+
 test.cb('cacheableRequest accepts url as string', t => {
 	cacheableRequest(request, s.url, response => {
 		getStream(response).then(body => {
