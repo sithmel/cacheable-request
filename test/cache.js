@@ -121,6 +121,17 @@ test('Cacheable responses are cached', async t => {
 	t.is(firstResponse.body, secondResponse.body);
 });
 
+test('Cacheable responses have unique cache key', async t => {
+	const endpoint = '/cache';
+	const cache = new Map();
+
+	const firstResponse = await cacheableRequestHelper(endpoint + '?foo', cache);
+	const secondResponse = await cacheableRequestHelper(endpoint + '?bar', cache);
+
+	t.is(cache.size, 2);
+	t.not(firstResponse.body, secondResponse.body);
+});
+
 test('TTL is passed to cache', async t => {
 	const endpoint = '/cache';
 	const store = new Map();
