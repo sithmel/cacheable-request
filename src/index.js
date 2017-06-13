@@ -75,7 +75,7 @@ const cacheableRequest = (request, opts, cb) => {
 
 	const get = opts => Promise.resolve(opts.cache ? opts.cache.get(key) : undefined).then(cacheEntry => {
 		if (typeof cacheEntry === 'undefined') {
-			return makeRequest(opts, cb);
+			return makeRequest(opts);
 		}
 
 		const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
