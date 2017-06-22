@@ -66,6 +66,22 @@ test.cb('cacheableRequest emits response event for network responses', t => {
 		});
 });
 
+test.cb('cacheableRequest emits response event for cached responses', t => {
+	const cache = new Map();
+	const opts = Object.assign(url.parse(s.url), { cache });
+	cacheableRequest(request, opts, () => {
+		// This needs to happen in next tick so cache entry has time to be stored
+		setImmediate(() => {
+			cacheableRequest(request, opts)
+				.on('request', req => req.end())
+				.on('response', response => {
+					t.true(response.fromCache);
+					t.end();
+				});
+		});
+	}).on('request', req => req.end());
+});
+
 test.after('cleanup', async () => {
 	await s.close();
 });
