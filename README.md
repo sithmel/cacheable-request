@@ -66,6 +66,32 @@ cacheableRequest(http.request, opts, response => {
 
 > TODO
 
+## API
+
+### cacheableRequest(request, opts, [cb])
+
+Returns an event emitter.
+
+#### request
+
+Type: `function`
+
+Request function to wrap with cache support. Should be [`http.request`](https://nodejs.org/api/http.html#http_http_request_options_callback) or a similar API compatible request function.
+
+#### opts
+
+Type: `string` `object`
+
+Any of the default request functions options plus a `cache` option for the cache adapter.
+
+The `cache` option can be omitted and the request will be passed directly through to the request function with no caching.
+
+#### cb
+
+Type: `function`
+
+The callback function which will receive the response as an argument.
+
 ## License
 
 MIT © Luke Childs
