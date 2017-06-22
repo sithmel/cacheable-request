@@ -28,9 +28,10 @@ const req = http.request(opts, cb);
 req.end();
 
 // You can do
+const cache = new Map();
 const opts = {
   host: 'example.com',
-  cache: new Map()
+  cache: cache
 };
 const cacheReq = cacheableRequest(http.request, opts, cb);
 cacheReq.on('request', req => req.end());
