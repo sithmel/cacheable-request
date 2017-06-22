@@ -62,6 +62,10 @@ cacheableRequest(http.request, opts, response => {
 }).on('request', req => req.end());
 ```
 
+## Cache Adapters
+
+> TODO
+
 ## License
 
 MIT © Luke Childs
