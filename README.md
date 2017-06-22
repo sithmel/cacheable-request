@@ -90,7 +90,7 @@ The `cache` option can be omitted and the request will be passed directly throug
 
 Type: `function`
 
-The callback function which will receive the response as an argument.
+The callback function which will receive the response as an argument. The response can be either a [Node.js HTTP response stream](https://nodejs.org/api/http.html#http_class_http_incomingmessage) or a [responselike object](https://github.com/lukechilds/responselike).
 
 #### .on('request', request)
 
