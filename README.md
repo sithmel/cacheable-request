@@ -92,6 +92,12 @@ Type: `function`
 
 The callback function which will receive the response as an argument.
 
+#### .on('request', request)
+
+`request` event to get the request object of the request.
+
+Note: This event will only fire if an HTTP request is made, not when a response is retrieved from cache. However, you should always handle the event to end the request.
+
 ## License
 
 MIT © Luke Childs
