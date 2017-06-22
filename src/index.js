@@ -66,6 +66,7 @@ const cacheableRequest = (request, opts, cb) => {
 				opts.cache.delete(key);
 			}
 
+			ee.emit('response', clonedResponse || response);
 			if (typeof cb === 'function') {
 				cb(clonedResponse || response);
 			}
@@ -85,6 +86,7 @@ const cacheableRequest = (request, opts, cb) => {
 			response.cachePolicy = policy;
 			response.fromCache = true;
 
+			ee.emit('response', response);
 			if (typeof cb === 'function') {
 				cb(response);
 			}
