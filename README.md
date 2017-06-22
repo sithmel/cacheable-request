@@ -41,27 +41,6 @@ cacheableRequest(https.request, opts, cb);
 cacheableRequest(electron.net, opts, cb);
 ```
 
-Cacheable responses will be stored using the provided cache adapter and returned directly from the cache on future requests if they are still valid. You can check if the response came from a network request or the cache by checking the `fromCache` property on the response.
-
-```js
-const cache = new Map();
-const opts = {
-  host: 'example.com',
-  cache: cache
-};
-
-cacheableRequest(http.request, opts, response => {
-  console.log(response.fromCache);
-  // false
-}).on('request', req => req.end());
-
-// Then at some point in the future
-cacheableRequest(http.request, opts, response => {
-  console.log(response.fromCache);
-  // true
-}).on('request', req => req.end());
-```
-
 ## Cache Adapters
 
 > TODO
