@@ -57,6 +57,15 @@ test.cb('cacheableRequest handles no callback parameter', t => {
 	});
 });
 
+test.cb('cacheableRequest emits response event for network responses', t => {
+	cacheableRequest(request, url.parse(s.url))
+		.on('request', req => req.end())
+		.on('response', response => {
+			t.false(response.fromCache);
+			t.end();
+		});
+});
+
 test.after('cleanup', async () => {
 	await s.close();
 });
