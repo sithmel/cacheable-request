@@ -98,6 +98,10 @@ The callback function which will receive the response as an argument.
 
 Note: This event will only fire if an HTTP request is made, not when a response is retrieved from cache. However, you should always handle the `request` event to end the request and handle any potential request errors.
 
+#### .on('response', response)
+
+`response` event to get the response object from the HTTP request or cache.
+
 ## License
 
 MIT © Luke Childs
