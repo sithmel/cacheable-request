@@ -76,28 +76,30 @@ const cacheableRequest = (request, opts, cb) => {
 		ee.emit('request', req);
 	};
 
-	const get = opts => Promise.resolve(opts.cache ? opts.cache.get(key) : undefined).then(cacheEntry => {
-		if (typeof cacheEntry === 'undefined') {
-			return makeRequest(opts);
-		}
-
-		const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
-		if (policy.satisfiesWithoutRevalidation(opts)) {
-			const headers = policy.responseHeaders();
-			const response = new Response(cacheEntry.statusCode, headers, cacheEntry.body, cacheEntry.url);
-			response.cachePolicy = policy;
-			response.fromCache = true;
-
-			ee.emit('response', response);
-			if (typeof cb === 'function') {
-				cb(response);
+	const get = opts => Promise.resolve()
+		.then(() => opts.cache ? opts.cache.get(key) : undefined)
+		.then(cacheEntry => {
+			if (typeof cacheEntry === 'undefined') {
+				return makeRequest(opts);
 			}
-		} else {
-			revalidate = cacheEntry;
-			opts.headers = policy.revalidationHeaders(opts);
-			makeRequest(opts);
-		}
-	});
+
+			const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
+			if (policy.satisfiesWithoutRevalidation(opts)) {
+				const headers = policy.responseHeaders();
+				const response = new Response(cacheEntry.statusCode, headers, cacheEntry.body, cacheEntry.url);
+				response.cachePolicy = policy;
+				response.fromCache = true;
+
+				ee.emit('response', response);
+				if (typeof cb === 'function') {
+					cb(response);
+				}
+			} else {
+				revalidate = cacheEntry;
+				opts.headers = policy.revalidationHeaders(opts);
+				makeRequest(opts);
+			}
+		});
 
 	get(opts).catch(err => ee.emit('error', err));
 
