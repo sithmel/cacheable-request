@@ -100,6 +100,24 @@ test.cb('cacheableRequest emits error event if cache.get errors', t => {
 		.on('request', req => req.end());
 });
 
+test.cb('cacheableRequest emits error event if cache.set errors', t => {
+	const errMessage = 'Fail';
+	const store = new Map();
+	const cache = {
+		get: store.get.bind(store),
+		set: () => {
+			throw new Error(errMessage);
+		},
+		delete: store.delete.bind(store)
+	};
+	cacheableRequest(request, Object.assign(url.parse(s.url), { cache }))
+		.on('error', err => {
+			t.is(err.message, errMessage);
+			t.end();
+		})
+		.on('request', req => req.end());
+});
+
 test.after('cleanup', async () => {
 	await s.close();
 });
