@@ -52,16 +52,18 @@ const cacheableRequest = (request, opts, cb) => {
 			let clonedResponse;
 			if (opts.cache && response.cachePolicy.storable()) {
 				clonedResponse = cloneResponse(response);
-				getStream.buffer(response).then(body => {
-					const value = {
-						cachePolicy: response.cachePolicy.toObject(),
-						url: response.url,
-						statusCode: response.fromCache ? revalidate.statusCode : response.statusCode,
-						body
-					};
-					const ttl = response.cachePolicy.timeToLive();
-					opts.cache.set(key, value, ttl);
-				});
+				getStream.buffer(response)
+					.then(body => {
+						const value = {
+							cachePolicy: response.cachePolicy.toObject(),
+							url: response.url,
+							statusCode: response.fromCache ? revalidate.statusCode : response.statusCode,
+							body
+						};
+						const ttl = response.cachePolicy.timeToLive();
+						opts.cache.set(key, value, ttl);
+					})
+					.catch(err => ee.emit('error', err));
 			} else if (opts.cache && revalidate) {
 				opts.cache.delete(key);
 			}
@@ -97,7 +99,7 @@ const cacheableRequest = (request, opts, cb) => {
 		}
 	});
 
-	get(opts);
+	get(opts).catch(err => ee.emit('error', err));
 
 	return ee;
 };
