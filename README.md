@@ -81,6 +81,21 @@ The callback function which will receive the response as an argument. The respon
 
 `response` event to get the response object from the HTTP request or cache.
 
+#### .on('error', error)
+
+`error` event emitted in case of an error with the cache logic.
+
+**Note:** You still need to handle requst errors on `request`. e.g:
+
+```js
+cacheableRequest(http.request, opts, cb)
+  .on('error', handleCacheError)
+  .on('request', req => {
+    req.on('error', handleRequestError);
+    req.end();
+  });
+```
+
 ## License
 
 MIT © Luke Childs
