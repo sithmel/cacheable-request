@@ -103,8 +103,8 @@ test('Non cacheable responses are not cached', async t => {
 	const endpoint = '/no-store';
 	const cache = new Map();
 
-	const firstResponseInt = parseInt((await cacheableRequestHelper(endpoint, cache)).body, 10);
-	const secondResponseInt = parseInt((await cacheableRequestHelper(endpoint, cache)).body, 10);
+	const firstResponseInt = Number((await cacheableRequestHelper(endpoint, cache)).body);
+	const secondResponseInt = Number((await cacheableRequestHelper(endpoint, cache)).body);
 
 	t.is(cache.size, 0);
 	t.true(firstResponseInt < secondResponseInt);
