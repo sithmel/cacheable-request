@@ -73,7 +73,8 @@ const cacheableRequest = (request, opts, cb) => {
 					})
 					.catch(err => ee.emit('error', err));
 			} else if (opts.cache && revalidate) {
-				cache.delete(key);
+				cache.delete(key)
+					.catch(err => ee.emit('error', err));
 			}
 
 			ee.emit('response', clonedResponse || response);
