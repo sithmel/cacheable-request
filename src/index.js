@@ -8,6 +8,7 @@ const CachePolicy = require('http-cache-semantics');
 const Response = require('responselike');
 const lowercaseKeys = require('lowercase-keys');
 const cloneResponse = require('clone-response');
+const Keyv = require('keyv');
 
 const cacheKey = opts => {
 	const url = normalizeUrl(urlLib.format(opts));
@@ -20,7 +21,8 @@ const cacheableRequest = (request, opts, cb) => {
 	}
 	opts = Object.assign({
 		headers: {},
-		method: 'GET'
+		method: 'GET',
+		cache: false
 	}, opts);
 	opts.headers = lowercaseKeys(opts.headers);
 
@@ -28,6 +30,7 @@ const cacheableRequest = (request, opts, cb) => {
 		throw new TypeError('Parameter `request` must be a function');
 	}
 
+	const cache = new Keyv({ store: opts.cache });
 	const ee = new EventEmitter();
 	const key = cacheKey(opts);
 	let revalidate = false;
@@ -61,11 +64,11 @@ const cacheableRequest = (request, opts, cb) => {
 							body
 						};
 						const ttl = response.cachePolicy.timeToLive();
-						opts.cache.set(key, value, ttl);
+						cache.set(key, value, ttl);
 					})
 					.catch(err => ee.emit('error', err));
 			} else if (opts.cache && revalidate) {
-				opts.cache.delete(key);
+				cache.delete(key);
 			}
 
 			ee.emit('response', clonedResponse || response);
@@ -77,7 +80,7 @@ const cacheableRequest = (request, opts, cb) => {
 	};
 
 	const get = opts => Promise.resolve()
-		.then(() => opts.cache ? opts.cache.get(key) : undefined)
+		.then(() => opts.cache ? cache.get(key) : undefined)
 		.then(cacheEntry => {
 			if (typeof cacheEntry === 'undefined') {
 				return makeRequest(opts);
