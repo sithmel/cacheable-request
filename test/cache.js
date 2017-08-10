@@ -9,8 +9,8 @@ import cacheableRequest from '../';
 let s;
 
 // Simple wrapper that returns a promise, reads stream and sets up some options
-const cacheableRequestHelper = (path, cache) => new Promise(resolve => {
-	const opts = Object.assign({}, url.parse(s.url + path), { cache });
+const cacheableRequestHelper = (path, o) => new Promise(resolve => {
+	const opts = Object.assign({}, url.parse(s.url + path), o);
 	cacheableRequest(request, opts, response => {
 		getStream(response).then(body => {
 			response.body = body;
@@ -103,8 +103,8 @@ test('Non cacheable responses are not cached', async t => {
 	const endpoint = '/no-store';
 	const cache = new Map();
 
-	const firstResponseInt = Number((await cacheableRequestHelper(endpoint, cache)).body);
-	const secondResponseInt = Number((await cacheableRequestHelper(endpoint, cache)).body);
+	const firstResponseInt = Number((await cacheableRequestHelper(endpoint, { cache })).body);
+	const secondResponseInt = Number((await cacheableRequestHelper(endpoint, { cache })).body);
 
 	t.is(cache.size, 0);
 	t.true(firstResponseInt < secondResponseInt);
@@ -114,8 +114,8 @@ test('Cacheable responses are cached', async t => {
 	const endpoint = '/cache';
 	const cache = new Map();
 
-	const firstResponse = await cacheableRequestHelper(endpoint, cache);
-	const secondResponse = await cacheableRequestHelper(endpoint, cache);
+	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
+	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
 
 	t.is(cache.size, 1);
 	t.is(firstResponse.body, secondResponse.body);
@@ -125,8 +125,8 @@ test('Cacheable responses have unique cache key', async t => {
 	const endpoint = '/cache';
 	const cache = new Map();
 
-	const firstResponse = await cacheableRequestHelper(endpoint + '?foo', cache);
-	const secondResponse = await cacheableRequestHelper(endpoint + '?bar', cache);
+	const firstResponse = await cacheableRequestHelper(endpoint + '?foo', { cache });
+	const secondResponse = await cacheableRequestHelper(endpoint + '?bar', { cache });
 
 	t.is(cache.size, 2);
 	t.not(firstResponse.body, secondResponse.body);
@@ -147,15 +147,15 @@ test('TTL is passed to cache', async t => {
 
 	t.plan(2);
 
-	await cacheableRequestHelper(endpoint, cache);
+	await cacheableRequestHelper(endpoint, { cache, ttl: true });
 });
 
 test('Stale cache entries with Last-Modified headers are revalidated', async t => {
 	const endpoint = '/last-modified';
 	const cache = new Map();
 
-	const firstResponse = await cacheableRequestHelper(endpoint, cache);
-	const secondResponse = await cacheableRequestHelper(endpoint, cache);
+	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
+	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
 
 	t.is(cache.size, 1);
 	t.is(firstResponse.statusCode, 200);
@@ -168,8 +168,8 @@ test('Stale cache entries with ETag headers are revalidated', async t => {
 	const endpoint = '/etag';
 	const cache = new Map();
 
-	const firstResponse = await cacheableRequestHelper(endpoint, cache);
-	const secondResponse = await cacheableRequestHelper(endpoint, cache);
+	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
+	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
 
 	t.is(cache.size, 1);
 	t.is(firstResponse.statusCode, 200);
@@ -182,9 +182,9 @@ test('Stale cache entries that can\'t be revalidate are deleted from cache', asy
 	const endpoint = '/cache-then-no-store-on-revalidate';
 	const cache = new Map();
 
-	const firstResponse = await cacheableRequestHelper(endpoint, cache);
+	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
 	t.is(cache.size, 1);
-	const secondResponse = await cacheableRequestHelper(endpoint, cache);
+	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
 
 	t.is(cache.size, 0);
 	t.is(firstResponse.statusCode, 200);
@@ -197,8 +197,8 @@ test('Response objects have fromCache property set correctly', async t => {
 	const endpoint = '/cache';
 	const cache = new Map();
 
-	const response = await cacheableRequestHelper(endpoint, cache);
-	const cachedResponse = await cacheableRequestHelper(endpoint, cache);
+	const response = await cacheableRequestHelper(endpoint, { cache });
+	const cachedResponse = await cacheableRequestHelper(endpoint, { cache });
 
 	t.false(response.fromCache);
 	t.true(cachedResponse.fromCache);
@@ -208,10 +208,10 @@ test('Revalidated responses that are re-cached return 304 but 200 on subsequent 
 	const endpoint = '/etag-cache-1s';
 	const cache = new Map();
 
-	const firstResponse = await cacheableRequestHelper(endpoint, cache);
+	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
 	await delay(1100);
-	const secondResponse = await cacheableRequestHelper(endpoint, cache);
-	const thirdResponse = await cacheableRequestHelper(endpoint, cache);
+	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
+	const thirdResponse = await cacheableRequestHelper(endpoint, { cache });
 
 	t.is(firstResponse.statusCode, 200);
 	t.false(firstResponse.fromCache);
@@ -225,8 +225,8 @@ test('Revalidated responses that are modified are passed through', async t => {
 	const endpoint = '/revalidate-modified';
 	const cache = new Map();
 
-	const firstResponse = await cacheableRequestHelper(endpoint, cache);
-	const secondResponse = await cacheableRequestHelper(endpoint, cache);
+	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
+	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
 
 	t.is(firstResponse.statusCode, 200);
 	t.is(secondResponse.statusCode, 200);
@@ -239,7 +239,7 @@ test.cb('Undefined callback parameter inside cache logic is handled', t => {
 	const cache = new Map();
 	const opts = Object.assign({}, url.parse(s.url + endpoint), { cache });
 
-	cacheableRequestHelper(endpoint, cache).then(() => {
+	cacheableRequestHelper(endpoint, { cache }).then(() => {
 		cacheableRequest(request, opts);
 		setTimeout(() => {
 			t.end();
