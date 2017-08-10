@@ -30,7 +30,10 @@ const cacheableRequest = (request, opts, cb) => {
 		throw new TypeError('Parameter `request` must be a function');
 	}
 
-	const cache = new Keyv({ store: opts.cache });
+	const cache = new Keyv({
+		uri: typeof opts.cache === 'string' && opts.cache,
+		store: typeof opts.cache !== 'string' && opts.cache
+	});
 	const ee = new EventEmitter();
 	const key = cacheKey(opts);
 	let revalidate = false;
