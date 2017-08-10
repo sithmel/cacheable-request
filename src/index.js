@@ -32,7 +32,8 @@ const cacheableRequest = (request, opts, cb) => {
 
 	const cache = new Keyv({
 		uri: typeof opts.cache === 'string' && opts.cache,
-		store: typeof opts.cache !== 'string' && opts.cache
+		store: typeof opts.cache !== 'string' && opts.cache,
+		namespace: 'got'
 	});
 	const ee = new EventEmitter();
 	const key = cacheKey(opts);
