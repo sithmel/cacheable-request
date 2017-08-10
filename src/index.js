@@ -69,7 +69,7 @@ const cacheableRequest = (request, opts, cb) => {
 							body
 						};
 						const ttl = opts.ttl ? response.cachePolicy.timeToLive() : undefined;
-						cache.set(key, value, ttl);
+						return cache.set(key, value, ttl);
 					})
 					.catch(err => ee.emit('error', err));
 			} else if (opts.cache && revalidate) {
