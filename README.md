@@ -59,9 +59,15 @@ Request function to wrap with cache support. Should be [`http.request`](https://
 
 #### opts
 
-Type: `string` `object`
+Type: `object`
 
-Any of the default request functions options plus a `cache` option for the cache adapter.
+Any of the default request functions options plus:
+
+##### opts.cache
+
+Type `cache adapter instance`
+
+The cache adapter should follow the [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) API. You can pass `new Map()` to cache items in memory, or a [Keyv](https://github.com/lukechilds/keyv#official-storage-adapters) storage adapter if you want a shared persistent store.
 
 The `cache` option can be omitted and the request will be passed directly through to the request function with no caching.
 
