@@ -22,7 +22,7 @@ const cacheableRequest = (request, opts, cb) => {
 	opts = Object.assign({
 		headers: {},
 		method: 'GET',
-		cache: false,
+		cache: undefined,
 		strictTtl: false
 	}, opts);
 	opts.headers = lowercaseKeys(opts.headers);
