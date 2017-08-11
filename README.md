@@ -71,6 +71,15 @@ The cache adapter should follow the [Map](https://developer.mozilla.org/en-US/do
 
 The `cache` option can be omitted and the request will be passed directly through to the request function with no caching.
 
+##### opts.strictTtl
+
+Type: `object`<br>
+Default `false`
+
+If set to `false` expired resources are still kept in the cache and will be revalidated on the next request with `If-None-Match`/`If-Modified-Since` headers.
+
+If set to `true` once a cached resource has expired it is deleted and will have to be re-requested.
+
 #### cb
 
 Type: `function`
