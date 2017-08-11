@@ -23,7 +23,7 @@ const cacheableRequest = (request, opts, cb) => {
 		headers: {},
 		method: 'GET',
 		cache: false,
-		ttl: false
+		strictTtl: false
 	}, opts);
 	opts.headers = lowercaseKeys(opts.headers);
 
@@ -68,7 +68,7 @@ const cacheableRequest = (request, opts, cb) => {
 							statusCode: response.fromCache ? revalidate.statusCode : response.statusCode,
 							body
 						};
-						const ttl = opts.ttl ? response.cachePolicy.timeToLive() : undefined;
+						const ttl = opts.strictTtl ? response.cachePolicy.timeToLive() : undefined;
 						return cache.set(key, value, ttl);
 					})
 					.catch(err => ee.emit('error', err));

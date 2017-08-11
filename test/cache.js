@@ -147,7 +147,7 @@ test('TTL is passed to cache', async t => {
 
 	t.plan(2);
 
-	await cacheableRequestHelper(endpoint, { cache, ttl: true });
+	await cacheableRequestHelper(endpoint, { cache, strictTtl: true });
 });
 
 test('Stale cache entries with Last-Modified headers are revalidated', async t => {
