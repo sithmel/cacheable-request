@@ -137,6 +137,25 @@ test('Cacheable responses have unique cache key', async t => {
 	t.not(firstResponse.body, secondResponse.body);
 });
 
+test('Setting opts.cache to false bypasses cache for a single request', async t => {
+	const endpoint = '/cache';
+	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
+	const opts = url.parse(s.url + endpoint);
+	const optsNoCache = Object.assign({ cache: false }, opts);
+
+	const firstResponse = await cacheableRequestHelper(opts);
+	const secondResponse = await cacheableRequestHelper(opts);
+	const thirdResponse = await cacheableRequestHelper(optsNoCache);
+	const fourthResponse = await cacheableRequestHelper(opts);
+
+	t.false(firstResponse.fromCache);
+	t.true(secondResponse.fromCache);
+	t.false(thirdResponse.fromCache);
+	t.true(fourthResponse.fromCache);
+});
+
 test('TTL is passed to cache', async t => {
 	const endpoint = '/cache';
 	const store = new Map();
