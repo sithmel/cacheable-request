@@ -4,7 +4,7 @@ import test from 'ava';
 import getStream from 'get-stream';
 import createTestServer from 'create-test-server';
 import delay from 'delay';
-import CacheableRequest from '../';
+import CacheableRequest from 'this';
 
 let s;
 
