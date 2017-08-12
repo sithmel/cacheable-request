@@ -4,7 +4,7 @@ import url from 'url';
 import test from 'ava';
 import createTestServer from 'create-test-server';
 import getStream from 'get-stream';
-import cacheableRequest from '../';
+import CacheableRequest from '../';
 
 let s;
 
@@ -14,23 +14,19 @@ test.before('setup', async () => {
 });
 
 test('cacheableRequest is a function', t => {
+	const cacheableRequest = new CacheableRequest(request);
 	t.is(typeof cacheableRequest, 'function');
 });
 
 test.cb('cacheableRequest returns an event emitter', t => {
-	const returnValue = cacheableRequest(request, url.parse(s.url), () => t.end()).on('request', req => req.end());
+	const cacheableRequest = new CacheableRequest(request);
+	const returnValue = cacheableRequest(url.parse(s.url), () => t.end()).on('request', req => req.end());
 	t.true(returnValue instanceof EventEmitter);
 });
 
-test('cacheableRequest throws TypeError if request fn isn\'t passed in', t => {
-	const error = t.throws(() => {
-		cacheableRequest('not a request function', url.parse(s.url));
-	}, TypeError);
-	t.is(error.message, 'Parameter `request` must be a function');
-});
-
 test.cb('cacheableRequest passes requests through if no cache option is set', t => {
-	cacheableRequest(request, url.parse(s.url), response => {
+	const cacheableRequest = new CacheableRequest(request);
+	cacheableRequest(url.parse(s.url), response => {
 		getStream(response).then(body => {
 			t.is(body, 'hi');
 			t.end();
@@ -39,7 +35,8 @@ test.cb('cacheableRequest passes requests through if no cache option is set', t 
 });
 
 test.cb('cacheableRequest accepts url as string', t => {
-	cacheableRequest(request, s.url, response => {
+	const cacheableRequest = new CacheableRequest(request);
+	cacheableRequest(s.url, response => {
 		getStream(response).then(body => {
 			t.is(body, 'hi');
 			t.end();
@@ -48,7 +45,8 @@ test.cb('cacheableRequest accepts url as string', t => {
 });
 
 test.cb('cacheableRequest handles no callback parameter', t => {
-	cacheableRequest(request, url.parse(s.url)).on('request', req => {
+	const cacheableRequest = new CacheableRequest(request);
+	cacheableRequest(url.parse(s.url)).on('request', req => {
 		req.end();
 		req.on('response', response => {
 			t.is(response.statusCode, 200);
@@ -58,7 +56,8 @@ test.cb('cacheableRequest handles no callback parameter', t => {
 });
 
 test.cb('cacheableRequest emits response event for network responses', t => {
-	cacheableRequest(request, url.parse(s.url))
+	const cacheableRequest = new CacheableRequest(request);
+	cacheableRequest(url.parse(s.url))
 		.on('request', req => req.end())
 		.on('response', response => {
 			t.false(response.fromCache);
@@ -67,12 +66,13 @@ test.cb('cacheableRequest emits response event for network responses', t => {
 });
 
 test.cb('cacheableRequest emits response event for cached responses', t => {
+	const cacheableRequest = new CacheableRequest(request);
 	const cache = new Map();
 	const opts = Object.assign(url.parse(s.url), { cache });
-	cacheableRequest(request, opts, () => {
+	cacheableRequest(opts, () => {
 		// This needs to happen in next tick so cache entry has time to be stored
 		setImmediate(() => {
-			cacheableRequest(request, opts)
+			cacheableRequest(opts)
 				.on('request', req => req.end())
 				.on('response', response => {
 					t.true(response.fromCache);
@@ -92,7 +92,8 @@ test.cb('cacheableRequest emits error event if cache.get errors', t => {
 		set: store.set.bind(store),
 		delete: store.delete.bind(store)
 	};
-	cacheableRequest(request, Object.assign(url.parse(s.url), { cache }))
+	const cacheableRequest = new CacheableRequest(request, cache);
+	cacheableRequest(url.parse(s.url))
 		.on('error', err => {
 			t.is(err.message, errMessage);
 			t.end();
@@ -110,7 +111,8 @@ test.cb('cacheableRequest emits error event if cache.set errors', t => {
 		},
 		delete: store.delete.bind(store)
 	};
-	cacheableRequest(request, Object.assign(url.parse(s.url), { cache }))
+	const cacheableRequest = new CacheableRequest(request, cache);
+	cacheableRequest(url.parse(s.url))
 		.on('error', err => {
 			t.is(err.message, errMessage);
 			t.end();
