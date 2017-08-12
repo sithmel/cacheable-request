@@ -4,14 +4,13 @@ import test from 'ava';
 import getStream from 'get-stream';
 import createTestServer from 'create-test-server';
 import delay from 'delay';
-import cacheableRequest from '../';
+import CacheableRequest from '../';
 
 let s;
 
-// Simple wrapper that returns a promise, reads stream and sets up some options
-const cacheableRequestHelper = (path, o) => new Promise(resolve => {
-	const opts = Object.assign({}, url.parse(s.url + path), o);
-	cacheableRequest(request, opts, response => {
+// Promisify cacheableRequest
+const promisify = cacheableRequest => opts => new Promise(resolve => {
+	cacheableRequest(opts, response => {
 		getStream(response).then(body => {
 			response.body = body;
 			resolve(response);
@@ -102,9 +101,11 @@ test.before('setup', async () => {
 test('Non cacheable responses are not cached', async t => {
 	const endpoint = '/no-store';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const firstResponseInt = Number((await cacheableRequestHelper(endpoint, { cache })).body);
-	const secondResponseInt = Number((await cacheableRequestHelper(endpoint, { cache })).body);
+	const firstResponseInt = Number((await cacheableRequestHelper(s.url + endpoint)).body);
+	const secondResponseInt = Number((await cacheableRequestHelper(s.url + endpoint)).body);
 
 	t.is(cache.size, 0);
 	t.true(firstResponseInt < secondResponseInt);
@@ -113,9 +114,11 @@ test('Non cacheable responses are not cached', async t => {
 test('Cacheable responses are cached', async t => {
 	const endpoint = '/cache';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
-	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
 
 	t.is(cache.size, 1);
 	t.is(firstResponse.body, secondResponse.body);
@@ -124,9 +127,11 @@ test('Cacheable responses are cached', async t => {
 test('Cacheable responses have unique cache key', async t => {
 	const endpoint = '/cache';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const firstResponse = await cacheableRequestHelper(endpoint + '?foo', { cache });
-	const secondResponse = await cacheableRequestHelper(endpoint + '?bar', { cache });
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint + '?foo');
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint + '?bar');
 
 	t.is(cache.size, 2);
 	t.not(firstResponse.body, secondResponse.body);
@@ -144,18 +149,23 @@ test('TTL is passed to cache', async t => {
 		},
 		delete: store.delete.bind(store)
 	};
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
+	const opts = Object.assign({ strictTtl: true }, url.parse(s.url + endpoint));
 
 	t.plan(2);
 
-	await cacheableRequestHelper(endpoint, { cache, strictTtl: true });
+	await cacheableRequestHelper(opts);
 });
 
 test('Stale cache entries with Last-Modified headers are revalidated', async t => {
 	const endpoint = '/last-modified';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
-	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
 
 	t.is(cache.size, 1);
 	t.is(firstResponse.statusCode, 200);
@@ -167,9 +177,11 @@ test('Stale cache entries with Last-Modified headers are revalidated', async t =
 test('Stale cache entries with ETag headers are revalidated', async t => {
 	const endpoint = '/etag';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
-	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
 
 	t.is(cache.size, 1);
 	t.is(firstResponse.statusCode, 200);
@@ -181,10 +193,12 @@ test('Stale cache entries with ETag headers are revalidated', async t => {
 test('Stale cache entries that can\'t be revalidate are deleted from cache', async t => {
 	const endpoint = '/cache-then-no-store-on-revalidate';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
 	t.is(cache.size, 1);
-	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
 
 	t.is(cache.size, 0);
 	t.is(firstResponse.statusCode, 200);
@@ -196,9 +210,11 @@ test('Stale cache entries that can\'t be revalidate are deleted from cache', asy
 test('Response objects have fromCache property set correctly', async t => {
 	const endpoint = '/cache';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const response = await cacheableRequestHelper(endpoint, { cache });
-	const cachedResponse = await cacheableRequestHelper(endpoint, { cache });
+	const response = await cacheableRequestHelper(s.url + endpoint);
+	const cachedResponse = await cacheableRequestHelper(s.url + endpoint);
 
 	t.false(response.fromCache);
 	t.true(cachedResponse.fromCache);
@@ -207,11 +223,13 @@ test('Response objects have fromCache property set correctly', async t => {
 test('Revalidated responses that are re-cached return 304 but 200 on subsequent cache responses', async t => {
 	const endpoint = '/etag-cache-1s';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
 	await delay(1100);
-	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
-	const thirdResponse = await cacheableRequestHelper(endpoint, { cache });
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
+	const thirdResponse = await cacheableRequestHelper(s.url + endpoint);
 
 	t.is(firstResponse.statusCode, 200);
 	t.false(firstResponse.fromCache);
@@ -224,9 +242,11 @@ test('Revalidated responses that are re-cached return 304 but 200 on subsequent 
 test('Revalidated responses that are modified are passed through', async t => {
 	const endpoint = '/revalidate-modified';
 	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	const firstResponse = await cacheableRequestHelper(endpoint, { cache });
-	const secondResponse = await cacheableRequestHelper(endpoint, { cache });
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
 
 	t.is(firstResponse.statusCode, 200);
 	t.is(secondResponse.statusCode, 200);
@@ -237,10 +257,11 @@ test('Revalidated responses that are modified are passed through', async t => {
 test.cb('Undefined callback parameter inside cache logic is handled', t => {
 	const endpoint = '/cache';
 	const cache = new Map();
-	const opts = Object.assign({}, url.parse(s.url + endpoint), { cache });
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
 
-	cacheableRequestHelper(endpoint, { cache }).then(() => {
-		cacheableRequest(request, opts);
+	cacheableRequestHelper(s.url + endpoint).then(() => {
+		cacheableRequest(s.url + endpoint);
 		setTimeout(() => {
 			t.end();
 		}, 500);
