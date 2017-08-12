@@ -10,109 +10,114 @@ const lowercaseKeys = require('lowercase-keys');
 const cloneResponse = require('clone-response');
 const Keyv = require('keyv');
 
-const cacheKey = opts => {
-	const url = normalizeUrl(urlLib.format(opts));
-	return `${opts.method}:${url}`;
-};
+class CacheableRequest {
+	constructor(request, cacheAdapter) {
+		if (typeof request !== 'function') {
+			throw new TypeError('Parameter `request` must be a function');
+		}
 
-const cacheableRequest = (request, opts, cb) => {
-	if (typeof opts === 'string') {
-		opts = urlLib.parse(opts);
-	}
-	opts = Object.assign({
-		headers: {},
-		method: 'GET',
-		cache: undefined,
-		strictTtl: false
-	}, opts);
-	opts.headers = lowercaseKeys(opts.headers);
-
-	if (typeof request !== 'function') {
-		throw new TypeError('Parameter `request` must be a function');
-	}
-
-	const cache = new Keyv({
-		uri: typeof opts.cache === 'string' && opts.cache,
-		store: typeof opts.cache !== 'string' && opts.cache,
-		namespace: 'got'
-	});
-	const ee = new EventEmitter();
-	const key = cacheKey(opts);
-	let revalidate = false;
-
-	const makeRequest = opts => {
-		const req = request(opts, response => {
-			if (revalidate) {
-				const revalidatedPolicy = CachePolicy.fromObject(revalidate.cachePolicy).revalidatedPolicy(opts, response);
-				if (!revalidatedPolicy.modified) {
-					const headers = revalidatedPolicy.policy.responseHeaders();
-					response = new Response(response.statusCode, headers, revalidate.body, revalidate.url);
-					response.cachePolicy = revalidatedPolicy.policy;
-					response.fromCache = true;
-				}
-			}
-
-			if (!response.fromCache) {
-				response.cachePolicy = new CachePolicy(opts, response);
-				response.fromCache = false;
-			}
-
-			let clonedResponse;
-			if (opts.cache && response.cachePolicy.storable()) {
-				clonedResponse = cloneResponse(response);
-				getStream.buffer(response)
-					.then(body => {
-						const value = {
-							cachePolicy: response.cachePolicy.toObject(),
-							url: response.url,
-							statusCode: response.fromCache ? revalidate.statusCode : response.statusCode,
-							body
-						};
-						const ttl = opts.strictTtl ? response.cachePolicy.timeToLive() : undefined;
-						return cache.set(key, value, ttl);
-					})
-					.catch(err => ee.emit('error', err));
-			} else if (opts.cache && revalidate) {
-				cache.delete(key)
-					.catch(err => ee.emit('error', err));
-			}
-
-			ee.emit('response', clonedResponse || response);
-			if (typeof cb === 'function') {
-				cb(clonedResponse || response);
-			}
-		});
-		ee.emit('request', req);
-	};
-
-	const get = opts => Promise.resolve()
-		.then(() => opts.cache ? cache.get(key) : undefined)
-		.then(cacheEntry => {
-			if (typeof cacheEntry === 'undefined') {
-				return makeRequest(opts);
-			}
-
-			const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
-			if (policy.satisfiesWithoutRevalidation(opts)) {
-				const headers = policy.responseHeaders();
-				const response = new Response(cacheEntry.statusCode, headers, cacheEntry.body, cacheEntry.url);
-				response.cachePolicy = policy;
-				response.fromCache = true;
-
-				ee.emit('response', response);
-				if (typeof cb === 'function') {
-					cb(response);
-				}
-			} else {
-				revalidate = cacheEntry;
-				opts.headers = policy.revalidationHeaders(opts);
-				makeRequest(opts);
-			}
+		this.cache = new Keyv({
+			uri: typeof cacheAdapter === 'string' && cacheAdapter,
+			store: typeof cacheAdapter !== 'string' && cacheAdapter,
+			namespace: 'cacheable-request'
 		});
 
-	get(opts).catch(err => ee.emit('error', err));
+		return this.createCacheableRequest(request);
+	}
 
-	return ee;
-};
+	createCacheableRequest(request) {
+		return (opts, cb) => {
+			if (typeof opts === 'string') {
+				opts = urlLib.parse(opts);
+			}
+			opts = Object.assign({
+				headers: {},
+				method: 'GET',
+				cache: true,
+				strictTtl: false
+			}, opts);
+			opts.headers = lowercaseKeys(opts.headers);
 
-module.exports = cacheableRequest;
+			const ee = new EventEmitter();
+			const url = normalizeUrl(urlLib.format(opts));
+			const key = `${opts.method}:${url}`;
+			let revalidate = false;
+
+			const makeRequest = opts => {
+				const req = request(opts, response => {
+					if (revalidate) {
+						const revalidatedPolicy = CachePolicy.fromObject(revalidate.cachePolicy).revalidatedPolicy(opts, response);
+						if (!revalidatedPolicy.modified) {
+							const headers = revalidatedPolicy.policy.responseHeaders();
+							response = new Response(response.statusCode, headers, revalidate.body, revalidate.url);
+							response.cachePolicy = revalidatedPolicy.policy;
+							response.fromCache = true;
+						}
+					}
+
+					if (!response.fromCache) {
+						response.cachePolicy = new CachePolicy(opts, response);
+						response.fromCache = false;
+					}
+
+					let clonedResponse;
+					if (opts.cache && response.cachePolicy.storable()) {
+						clonedResponse = cloneResponse(response);
+						getStream.buffer(response)
+							.then(body => {
+								const value = {
+									cachePolicy: response.cachePolicy.toObject(),
+									url: response.url,
+									statusCode: response.fromCache ? revalidate.statusCode : response.statusCode,
+									body
+								};
+								const ttl = opts.strictTtl ? response.cachePolicy.timeToLive() : undefined;
+								return this.cache.set(key, value, ttl);
+							})
+							.catch(err => ee.emit('error', err));
+					} else if (opts.cache && revalidate) {
+						this.cache.delete(key)
+							.catch(err => ee.emit('error', err));
+					}
+
+					ee.emit('response', clonedResponse || response);
+					if (typeof cb === 'function') {
+						cb(clonedResponse || response);
+					}
+				});
+				ee.emit('request', req);
+			};
+
+			const get = opts => Promise.resolve()
+				.then(() => opts.cache ? this.cache.get(key) : undefined)
+				.then(cacheEntry => {
+					if (typeof cacheEntry === 'undefined') {
+						return makeRequest(opts);
+					}
+
+					const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
+					if (policy.satisfiesWithoutRevalidation(opts)) {
+						const headers = policy.responseHeaders();
+						const response = new Response(cacheEntry.statusCode, headers, cacheEntry.body, cacheEntry.url);
+						response.cachePolicy = policy;
+						response.fromCache = true;
+
+						ee.emit('response', response);
+						if (typeof cb === 'function') {
+							cb(response);
+						}
+					} else {
+						revalidate = cacheEntry;
+						opts.headers = policy.revalidationHeaders(opts);
+						makeRequest(opts);
+					}
+				});
+
+			get(opts).catch(err => ee.emit('error', err));
+
+			return ee;
+		};
+	}
+}
+
+module.exports = CacheableRequest;
