@@ -155,6 +155,8 @@ The response can be either a [Node.js HTTP response stream](https://nodejs.org/a
 
 `error` event emitted in case of an error with the cache.
 
+Database connection errors are emitted here, however `cacheable-request` will attempt to re-request the resource and bypass the cache on a connection error. Therefore a database connection error doesn't necessarily mean the request won't be fulfilled.
+
 **Note:** You should still handle request errors in the `request` event. e.g:
 
 ```js
