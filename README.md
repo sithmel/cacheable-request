@@ -10,6 +10,19 @@
 
 **Note:** This is a low level wrapper around the core HTTP modules, it's not a high level request library.
 
+## Features
+
+- Only stores cacheable responses as defined by RFC 7234
+- Fresh cache entries are served directly from cache
+- Stale cache entries are revalidated with `If-None-Match`/`If-Modified-Since` headers
+- 304 responses from revalidation requests use cached body
+- Updates `Age` header on cached responses
+- Can completely bypass cache on a per request basis
+- Official support for Redis, MongoDB, SQLite, PostgreSQL and MySQL storage adapters
+- Easily plug in your own or third-party storage adapters
+- Adds cache support to any existing HTTP code with minimal changes
+- Uses [http-cache-semantics](https://github.com/pornel/http-cache-semantics) internally for HTTP RFC 7234 compliance
+
 ## Install
 
 ```shell
