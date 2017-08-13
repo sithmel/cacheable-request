@@ -178,7 +178,7 @@ test.cb('cacheableRequest makes request even if initial DB connection fails', t 
 		.on('request', req => req.end());
 });
 
-test.cb('cacheableRequest makes request even current DB connection fails', t => {
+test.cb('cacheableRequest makes request even if current DB connection fails', t => {
 	const cache = {
 		get: () => {
 			throw new Error();
