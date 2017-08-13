@@ -42,8 +42,10 @@ class CacheableRequest {
 			const url = normalizeUrl(urlLib.format(opts));
 			const key = `${opts.method}:${url}`;
 			let revalidate = false;
+			let madeRequest = false;
 
 			const makeRequest = opts => {
+				madeRequest = true;
 				const req = request(opts, response => {
 					if (revalidate) {
 						const revalidatedPolicy = CachePolicy.fromObject(revalidate.cachePolicy).revalidatedPolicy(opts, response);
@@ -115,7 +117,12 @@ class CacheableRequest {
 
 			this.cache.on('error', err => ee.emit('error', err));
 
-			get(opts).catch(err => ee.emit('error', err));
+			get(opts).catch(err => {
+				if (!madeRequest) {
+					makeRequest(opts);
+				}
+				ee.emit('error', err);
+			});
 
 			return ee;
 		};
