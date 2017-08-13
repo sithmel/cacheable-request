@@ -82,6 +82,16 @@ test.cb('cacheableRequest emits response event for cached responses', t => {
 	}).on('request', req => req.end());
 });
 
+test.cb('cacheableRequest emits error event if cache adapter connection errors', t => {
+	const cacheableRequest = new CacheableRequest(request, `sqlite://non/existent/database.sqlite`);
+	cacheableRequest(url.parse(s.url))
+		.on('error', err => {
+			t.is(err.code, 'SQLITE_CANTOPEN');
+			t.end();
+		})
+		.on('request', req => req.end());
+});
+
 test.cb('cacheableRequest emits error event if cache.get errors', t => {
 	const errMessage = 'Fail';
 	const store = new Map();
