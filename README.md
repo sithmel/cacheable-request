@@ -6,7 +6,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/lukechilds/cacheable-request/badge.svg?branch=master)](https://coveralls.io/github/lukechilds/cacheable-request?branch=master)
 [![npm](https://img.shields.io/npm/v/cacheable-request.svg)](https://www.npmjs.com/package/cacheable-request)
 
-[RFC 7234](http://httpwg.org/specs/rfc7234.html) compliant HTTP caching for native Node.js HTTP/HTTPS requests. Caching works out of the box in memory or is easily pluggable with a wide range of cache adapters.
+[RFC 7234](http://httpwg.org/specs/rfc7234.html) compliant HTTP caching for native Node.js HTTP/HTTPS requests. Caching works out of the box in memory or is easily pluggable with a wide range of storage adapters.
 
 ## Install
 
@@ -35,7 +35,7 @@ const cacheableRequest = new CacheableRequest(https.request);
 const cacheableRequest = new CacheableRequest(electron.net);
 ```
 
-## Cache Adapters
+## Storage Adapters
 
 `cacheable-request` uses [Keyv](https://github.com/lukechilds/keyv) to support a wide range of storage adapters.
 
@@ -88,9 +88,9 @@ Any of the default request functions options plus:
 
 ##### opts.cache
 
-Type `cache adapter instance`
+Type `storage adapter instance`
 
-The cache adapter should follow the [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) API. You can pass `new Map()` to cache items in memory, or a [Keyv storage adapter](https://github.com/lukechilds/keyv#official-storage-adapters) if you want a shared persistent store.
+The storage adapter should follow the [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) API. You can pass `new Map()` to cache items in memory, or a [Keyv storage adapter](https://github.com/lukechilds/keyv#official-storage-adapters) if you want a shared persistent store.
 
 The `cache` option can be omitted and the request will be passed directly through to the request function with no caching.
 
