@@ -20,6 +20,7 @@
 - Can completely bypass cache on a per request basis
 - Official support for Redis, MongoDB, SQLite, PostgreSQL and MySQL storage adapters
 - Easily plug in your own or third-party storage adapters
+- If DB connection fails, cache is automatically bypassed
 - Adds cache support to any existing HTTP code with minimal changes
 - Uses [http-cache-semantics](https://github.com/pornel/http-cache-semantics) internally for HTTP RFC 7234 compliance
 
