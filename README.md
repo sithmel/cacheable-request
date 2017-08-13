@@ -28,7 +28,7 @@ req.end();
 const cacheableRequest = new CacheableRequest(http.request);
 const cacheReq = cacheableRequest('example.com', cb);
 cacheReq.on('request', req => req.end());
-// 'example.com' will now be returned from the cache if it's still valid on a future request.
+// Future requests to 'example.com' will be returned from cache if still valid
 
 // You pass in any other http.request API compatible method to be wrapped with cache support:
 const cacheableRequest = new CacheableRequest(https.request);
