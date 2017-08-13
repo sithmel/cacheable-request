@@ -323,6 +323,8 @@ test('Keyv cache adapters load via connection uri', async t => {
 	t.false(firstResponse.fromCache);
 	t.true(secondResponse.fromCache);
 	t.is(cacheResult.length, 1);
+
+	await query(`DELETE FROM keyv`);
 });
 
 test.after('cleanup', async () => {
