@@ -8,6 +8,8 @@
 
 [RFC 7234](http://httpwg.org/specs/rfc7234.html) compliant HTTP caching for native Node.js HTTP/HTTPS requests. Caching works out of the box in memory or is easily pluggable with a wide range of storage adapters.
 
+**Note:** This is a low level wrapper around the core HTTP modules, it's not a high level request library.
+
 ## Install
 
 ```shell
