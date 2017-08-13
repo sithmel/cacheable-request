@@ -18,27 +18,20 @@ npm install --save cacheable-request
 
 ```js
 const http = require('http');
-const cacheableRequest = require('cacheable-request');
+const CacheableRequest = require('cacheable-request');
 
 // Then instead of
-const opts = {
-  host: 'example.com'
-};
-const req = http.request(opts, cb);
+const req = http.request('example.com', cb);
 req.end();
 
 // You can do
-const cache = new Map();
-const opts = {
-  host: 'example.com',
-  cache: cache
-};
-const cacheReq = cacheableRequest(http.request, opts, cb);
+const cacheableRequest = new CacheableRequest(http.request);
+const cacheReq = cacheableRequest('example.com', cb);
 cacheReq.on('request', req => req.end());
 
 // Or pass in any other http.request API compatible method:
-cacheableRequest(https.request, opts, cb);
-cacheableRequest(electron.net, opts, cb);
+const cacheableRequest = new CacheableRequest(https.request);
+const cacheableRequest = new CacheableRequest(electron.net);
 ```
 
 ## Cache Adapters
