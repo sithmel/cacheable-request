@@ -113,6 +113,8 @@ class CacheableRequest {
 					}
 				});
 
+			this.cache.on('error', err => ee.emit('error', err));
+
 			get(opts).catch(err => ee.emit('error', err));
 
 			return ee;
