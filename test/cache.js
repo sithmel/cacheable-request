@@ -4,6 +4,8 @@ import test from 'ava';
 import getStream from 'get-stream';
 import createTestServer from 'create-test-server';
 import delay from 'delay';
+import sqlite3 from 'sqlite3';
+import pify from 'pify';
 import CacheableRequest from 'this';
 
 let s;
@@ -285,6 +287,24 @@ test.cb('Undefined callback parameter inside cache logic is handled', t => {
 			t.end();
 		}, 500);
 	});
+});
+
+test('Keyv cache adapters load via connection uri', async t => {
+	const endpoint = '/cache';
+	const cacheableRequest = new CacheableRequest(request, 'sqlite://test/testdb.sqlite');
+	const cacheableRequestHelper = promisify(cacheableRequest);
+	const db = new sqlite3.Database('test/testdb.sqlite');
+	const query = pify(db.all).bind(db);
+
+	await query('DELETE FROM keyv');
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
+	const cacheContents = await query('SELECT * FROM keyv');
+
+	t.false(firstResponse.fromCache);
+	t.true(secondResponse.fromCache);
+	t.is(cacheContents.length, 1);
+	t.is(cacheContents[0].key, 'cacheable-request:GET:' + s.url + endpoint);
 });
 
 test.after('cleanup', async () => {
