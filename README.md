@@ -72,9 +72,9 @@ View the [Keyv docs](https://github.com/lukechilds/keyv) for more information on
 
 ## API
 
-### cacheableRequest(request, opts, [cb])
+### new cacheableRequest(request, [storageAdapter])
 
-Returns an event emitter.
+Returns the provided request function wrapped with cache support.
 
 #### request
 
@@ -82,53 +82,67 @@ Type: `function`
 
 Request function to wrap with cache support. Should be [`http.request`](https://nodejs.org/api/http.html#http_http_request_options_callback) or a similar API compatible request function.
 
-#### opts
+#### storageAdapter
 
-Type: `object`
+Type: `Keyv storage adapter`<br>
+Default: `new Map()`
+
+A [Keyv](https://github.com/lukechilds/keyv) storage adapter instance, or connection string if using with an official Keyv storage adapter.
+
+### Instance
+
+#### cacheableRequest(opts, [cb])
+
+Returns an event emitter.
+
+##### opts
+
+Type: `object`, `string`
 
 Any of the default request functions options plus:
 
-##### opts.cache
+###### opts.cache
 
-Type `storage adapter instance`
+Type: `boolean`<br>
+Default: `true`
 
-The storage adapter should follow the [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) API. You can pass `new Map()` to cache items in memory, or a [Keyv storage adapter](https://github.com/lukechilds/keyv#official-storage-adapters) if you want a shared persistent store.
+If the cache should be used. Setting this to false will completely bypass the cache for the current request.
 
-The `cache` option can be omitted and the request will be passed directly through to the request function with no caching.
+###### opts.strictTtl
 
-##### opts.strictTtl
+Type: `boolean`<br>
+Default: `false`
 
-Type: `object`<br>
-Default `false`
-
-If set to `false` expired resources are still kept in the cache and will be revalidated on the next request with `If-None-Match`/`If-Modified-Since` headers.
+If set to `false`, resources are kept in the cache after expiry and will be revalidated on the next request with `If-None-Match`/`If-Modified-Since` headers.
 
 If set to `true` once a cached resource has expired it is deleted and will have to be re-requested.
 
-#### cb
+##### cb
 
 Type: `function`
 
-The callback function which will receive the response as an argument. The response can be either a [Node.js HTTP response stream](https://nodejs.org/api/http.html#http_class_http_incomingmessage) or a [responselike object](https://github.com/lukechilds/responselike).
+The callback function which will receive the response as an argument.
 
-#### .on('request', request)
+The response can be either a [Node.js HTTP response stream](https://nodejs.org/api/http.html#http_class_http_incomingmessage) or a [responselike object](https://github.com/lukechilds/responselike). The response will also have a `fromCache` property set with a boolean value.
+
+##### .on('request', request)
 
 `request` event to get the request object of the request.
 
 **Note:** This event will only fire if an HTTP request is actually made, not when a response is retrieved from cache. However, you should always handle the `request` event to end the request and handle any potential request errors.
 
-#### .on('response', response)
+##### .on('response', response)
 
 `response` event to get the response object from the HTTP request or cache.
 
-#### .on('error', error)
+##### .on('error', error)
 
-`error` event emitted in case of an error with the cache logic.
+`error` event emitted in case of an error with the cache.
 
-**Note:** You still need to handle requst errors on `request`. e.g:
+**Note:** You should still handle request errors in the `request` event. e.g:
 
 ```js
-cacheableRequest(http.request, opts, cb)
+cacheableRequest('example.com', cb)
   .on('error', handleCacheError)
   .on('request', req => {
     req.on('error', handleRequestError);
