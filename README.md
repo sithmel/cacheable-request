@@ -113,7 +113,7 @@ If the cache should be used. Setting this to false will completely bypass the ca
 Type: `boolean`<br>
 Default: `false`
 
-If set to `false`, resources are kept in the cache after expiry and will be revalidated on the next request with `If-None-Match`/`If-Modified-Since` headers.
+If set to `false`, after a cached resource's TTL expires it is kept in the cache and will be revalidated on the next request with `If-None-Match`/`If-Modified-Since` headers.
 
 If set to `true` once a cached resource has expired it is deleted and will have to be re-requested.
 
