@@ -179,6 +179,26 @@ test('TTL is passed to cache', async t => {
 	await cacheableRequestHelper(opts);
 });
 
+test('TTL is not passed to cache if strictTtl is false', async t => {
+	const endpoint = '/cache';
+	const store = new Map();
+	const cache = {
+		get: store.get.bind(store),
+		set: (key, val, ttl) => {
+			t.true(typeof ttl === 'undefined');
+			return store.set(key, val, ttl);
+		},
+		delete: store.delete.bind(store)
+	};
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
+	const opts = Object.assign({ strictTtl: false }, url.parse(s.url + endpoint));
+
+	t.plan(1);
+
+	await cacheableRequestHelper(opts);
+});
+
 test('Stale cache entries with Last-Modified headers are revalidated', async t => {
 	const endpoint = '/last-modified';
 	const cache = new Map();
