@@ -316,15 +316,13 @@ test('Keyv cache adapters load via connection uri', async t => {
 	const db = new sqlite3.Database('test/testdb.sqlite');
 	const query = pify(db.all).bind(db);
 
-	await query('DELETE FROM keyv');
 	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
 	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
-	const cacheContents = await query('SELECT * FROM keyv');
+	const cacheResult = await query(`SELECT * FROM keyv WHERE "key" = "cacheable-request:GET:${s.url + endpoint}"`);
 
 	t.false(firstResponse.fromCache);
 	t.true(secondResponse.fromCache);
-	t.is(cacheContents.length, 1);
-	t.is(cacheContents[0].key, 'cacheable-request:GET:' + s.url + endpoint);
+	t.is(cacheResult.length, 1);
 });
 
 test.after('cleanup', async () => {
