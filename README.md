@@ -6,7 +6,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/lukechilds/cacheable-request/badge.svg?branch=master)](https://coveralls.io/github/lukechilds/cacheable-request?branch=master)
 [![npm](https://img.shields.io/npm/v/cacheable-request.svg)](https://www.npmjs.com/package/cacheable-request)
 
-[RFC 7234](http://httpwg.org/specs/rfc7234.html) compliant HTTP caching for native Node.js HTTP/HTTPS requests. Caching works out of the box with `new Map()` or is easily pluggable with a wide range of cache adapters.
+[RFC 7234](http://httpwg.org/specs/rfc7234.html) compliant HTTP caching for native Node.js HTTP/HTTPS requests. Caching works out of the box in memory or is easily pluggable with a wide range of cache adapters.
 
 ## Install
 
@@ -28,8 +28,9 @@ req.end();
 const cacheableRequest = new CacheableRequest(http.request);
 const cacheReq = cacheableRequest('example.com', cb);
 cacheReq.on('request', req => req.end());
+// 'example.com' will now be returned from the cache if it's still valid on a future request.
 
-// Or pass in any other http.request API compatible method:
+// You pass in any other http.request API compatible method to be wrapped with cache support:
 const cacheableRequest = new CacheableRequest(https.request);
 const cacheableRequest = new CacheableRequest(electron.net);
 ```
