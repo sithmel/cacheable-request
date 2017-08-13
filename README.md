@@ -37,7 +37,36 @@ const cacheableRequest = new CacheableRequest(electron.net);
 
 ## Cache Adapters
 
-> TODO
+`cacheable-request` uses [Keyv](https://github.com/lukechilds/keyv) to support a wide range of storage adapters.
+
+For example to use Redis as a cache backend you just need to install the official Redis Keyv storage adapter:
+
+```
+npm install --save @keyv/redis
+```
+
+And then you can just pass `CacheableRequest` your connection string:
+
+```js
+const cacheableRequest = new CacheableRequest(http.request, 'redis://user:pass@localhost:6379');
+```
+
+Keyv supports anything that follows the Map API so it's easy to write your own storage adapter or use a third-party solution.
+
+e.g The following are all valid storage adapters
+
+```js
+const storageAdapter = new Map();
+// or
+const storageAdapter = require('./my-storage-adapter');
+// or
+const QuickLRU = require('quick-lru');
+const storageAdapter = new QuickLRU({ maxSize: 1000 });
+
+const cacheableRequest = new CacheableRequest(http.request, storageAdapter);
+```
+
+View the [Keyv docs](https://github.com/lukechilds/keyv) for more information on how to use storage adapters.
 
 ## API
 
