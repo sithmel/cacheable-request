@@ -168,6 +168,27 @@ test.cb('cacheableRequest emits error event if cache.delete errors', t => {
 	})();
 });
 
+test.cb('cacheableRequest makes request even current DB connection fails', t => {
+	const cache = {
+		get: () => {
+			throw new Error();
+		},
+		set: () => {
+			throw new Error();
+		},
+		delete: () => {
+			throw new Error();
+		}
+	};
+	const cacheableRequest = new CacheableRequest(request, cache);
+	cacheableRequest(url.parse(s.url), res => {
+		t.is(res.statusCode, 200);
+		t.end();
+	})
+		.on('error', () => {})
+		.on('request', req => req.end());
+});
+
 test.after('cleanup', async () => {
 	await s.close();
 });
