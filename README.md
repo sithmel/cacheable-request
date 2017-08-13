@@ -18,6 +18,7 @@
 - 304 responses from revalidation requests use cached body
 - Updates `Age` header on cached responses
 - Can completely bypass cache on a per request basis
+- In memory cache by default
 - Official support for Redis, MongoDB, SQLite, PostgreSQL and MySQL storage adapters
 - Easily plug in your own or third-party storage adapters
 - If DB connection fails, cache is automatically bypassed
