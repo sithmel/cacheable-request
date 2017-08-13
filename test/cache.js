@@ -317,6 +317,7 @@ test('Keyv cache adapters load via connection uri', async t => {
 	const query = pify(db.all).bind(db);
 
 	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
+	await delay(1000);
 	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
 	const cacheResult = await query(`SELECT * FROM keyv WHERE "key" = "cacheable-request:GET:${s.url + endpoint}"`);
 
