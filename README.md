@@ -21,12 +21,12 @@ const http = require('http');
 const CacheableRequest = require('cacheable-request');
 
 // Then instead of
-const req = http.request('example.com', cb);
+const req = http.request('http://example.com', cb);
 req.end();
 
 // You can do
 const cacheableRequest = new CacheableRequest(http.request);
-const cacheReq = cacheableRequest('example.com', cb);
+const cacheReq = cacheableRequest('http://example.com', cb);
 cacheReq.on('request', req => req.end());
 // Future requests to 'example.com' will be returned from cache if still valid
 
