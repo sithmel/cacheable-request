@@ -120,6 +120,44 @@ test.cb('cacheableRequest emits error event if cache.set errors', t => {
 		.on('request', req => req.end());
 });
 
+test.cb('cacheableRequest emits error event if cache.delete errors', t => {
+	const errMessage = 'Fail';
+	const store = new Map();
+	const cache = {
+		get: store.get.bind(store),
+		set: store.set.bind(store),
+		delete: () => {
+			throw new Error(errMessage);
+		}
+	};
+	const cacheableRequest = new CacheableRequest(request, cache);
+
+	(async () => {
+		let i = 0;
+		const s = await createTestServer();
+		s.get('/', (req, res) => {
+			const cc = i === 0 ? 'public, max-age=0' : 'public, no-cache, no-store';
+			i++;
+			res.setHeader('Cache-Control', cc);
+			res.end('hi');
+		});
+		await s.listen(s.port);
+
+		cacheableRequest(s.url, () => {
+			// This needs to happen in next tick so cache entry has time to be stored
+			setImmediate(() => {
+				cacheableRequest(s.url)
+					.on('error', async err => {
+						t.is(err.message, errMessage);
+						await s.close();
+						t.end();
+					})
+					.on('request', req => req.end());
+			});
+		}).on('request', req => req.end());
+	})();
+});
+
 test.after('cleanup', async () => {
 	await s.close();
 });
