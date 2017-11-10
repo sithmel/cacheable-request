@@ -168,6 +168,19 @@ test.cb('cacheableRequest emits error event if cache.delete errors', t => {
 	})();
 });
 
+test.cb('cacheableRequest emits RequestError if request function throws', t => {
+	const cacheableRequest = new CacheableRequest(request);
+	const opts = url.parse(s.url);
+	opts.headers = { invalid: '💣' };
+	cacheableRequest(opts)
+		.on('error', err => {
+			t.true(err instanceof CacheableRequest.RequestError);
+			t.is(err.message, 'The header content contains invalid characters');
+			t.end();
+		})
+		.on('request', req => req.end());
+});
+
 test.cb('cacheableRequest makes request even if initial DB connection fails', t => {
 	const cacheableRequest = new CacheableRequest(request, 'sqlite://non/existent/database.sqlite');
 	cacheableRequest(url.parse(s.url), res => {
