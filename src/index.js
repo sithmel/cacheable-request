@@ -46,7 +46,7 @@ class CacheableRequest {
 
 			const makeRequest = opts => {
 				madeRequest = true;
-				const req = request(opts, response => {
+				const handler = response => {
 					if (revalidate) {
 						const revalidatedPolicy = CachePolicy.fromObject(revalidate.cachePolicy).revalidatedPolicy(opts, response);
 						if (!revalidatedPolicy.modified) {
@@ -76,18 +76,24 @@ class CacheableRequest {
 								const ttl = opts.strictTtl ? response.cachePolicy.timeToLive() : undefined;
 								return this.cache.set(key, value, ttl);
 							})
-							.catch(err => ee.emit('error', err));
+							.catch(err => ee.emit('error', new CacheableRequest.CacheError(err)));
 					} else if (opts.cache && revalidate) {
 						this.cache.delete(key)
-							.catch(err => ee.emit('error', err));
+							.catch(err => ee.emit('error', new CacheableRequest.CacheError(err)));
 					}
 
 					ee.emit('response', clonedResponse || response);
 					if (typeof cb === 'function') {
 						cb(clonedResponse || response);
 					}
-				});
-				ee.emit('request', req);
+				};
+
+				try {
+					const req = request(opts, handler);
+					ee.emit('request', req);
+				} catch (err) {
+					ee.emit('error', new CacheableRequest.RequestError(err));
+				}
 			};
 
 			const get = opts => Promise.resolve()
@@ -115,18 +121,34 @@ class CacheableRequest {
 					}
 				});
 
-			this.cache.on('error', err => ee.emit('error', err));
+			this.cache.on('error', err => ee.emit('error', new CacheableRequest.CacheError(err)));
 
 			get(opts).catch(err => {
 				if (!madeRequest) {
 					makeRequest(opts);
 				}
-				ee.emit('error', err);
+				ee.emit('error', new CacheableRequest.CacheError(err));
 			});
 
 			return ee;
 		};
 	}
 }
+
+CacheableRequest.RequestError = class extends Error {
+	constructor(err) {
+		super(err.message);
+		this.name = 'RequestError';
+		Object.assign(this, err);
+	}
+};
+
+CacheableRequest.CacheError = class extends Error {
+	constructor(err) {
+		super(err.message);
+		this.name = 'CacheError';
+		Object.assign(this, err);
+	}
+};
 
 module.exports = CacheableRequest;
