@@ -156,18 +156,26 @@ The response can be either a [Node.js HTTP response stream](https://nodejs.org/a
 
 `error` event emitted in case of an error with the cache.
 
-Database connection errors are emitted here, however `cacheable-request` will attempt to re-request the resource and bypass the cache on a connection error. Therefore a database connection error doesn't necessarily mean the request won't be fulfilled.
+Errors emitted here will be an instance of `CacheableRequest.RequestError` or `CacheableRequest.CacheError`. You will only ever receive a `RequestError` if the request function throws (normally caused by invalid user input). Normal request errors should be handled inside the `request` event.
 
-**Note:** You should still handle request errors in the `request` event. e.g:
+To properly handle all error scenarios you should use the following pattern:
 
 ```js
 cacheableRequest('example.com', cb)
-  .on('error', handleCacheError)
+  .on('error', err => {
+    if (err instanceof CacheableRequest.CacheError) {
+      handleCacheError(err); // Cache error
+    } else if (err instanceof CacheableRequest.RequestError) {
+      handleRequestError(err); // Request function thrown
+    }
+  })
   .on('request', req => {
-    req.on('error', handleRequestError);
+    req.on('error', handleRequestError); // Request error emitted
     req.end();
   });
 ```
+
+**Note:** Database connection errors are emitted here, however `cacheable-request` will attempt to re-request the resource and bypass the cache on a connection error. Therefore a database connection error doesn't necessarily mean the request won't be fulfilled.
 
 ## License
 
