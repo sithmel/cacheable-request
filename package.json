@@ -1,6 +1,6 @@
 {
   "name": "cacheable-request",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Wrap native HTTP requests with RFC compliant cache support",
   "main": "src/index.js",
   "scripts": {
