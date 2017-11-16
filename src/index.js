@@ -34,7 +34,8 @@ class CacheableRequest {
 				headers: {},
 				method: 'GET',
 				cache: true,
-				strictTtl: false
+				strictTtl: false,
+				automaticFailover: false
 			}, opts);
 			opts.headers = lowercaseKeys(opts.headers);
 
@@ -124,7 +125,7 @@ class CacheableRequest {
 			this.cache.on('error', err => ee.emit('error', new CacheableRequest.CacheError(err)));
 
 			get(opts).catch(err => {
-				if (!madeRequest) {
+				if (opts.automaticFailover && !madeRequest) {
 					makeRequest(opts);
 				}
 				ee.emit('error', new CacheableRequest.CacheError(err));
