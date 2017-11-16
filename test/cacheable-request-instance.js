@@ -185,9 +185,11 @@ test.cb('cacheableRequest emits RequestError if request function throws', t => {
 		.on('request', req => req.end());
 });
 
-test.cb('cacheableRequest makes request even if initial DB connection fails', t => {
+test.cb('cacheableRequest makes request even if initial DB connection fails (when opts.automaticFailover is enabled)', t => {
 	const cacheableRequest = new CacheableRequest(request, 'sqlite://non/existent/database.sqlite');
-	cacheableRequest(url.parse(s.url), res => {
+	const opts = url.parse(s.url);
+	opts.automaticFailover = true;
+	cacheableRequest(opts, res => {
 		t.is(res.statusCode, 200);
 		t.end();
 	})
@@ -195,7 +197,7 @@ test.cb('cacheableRequest makes request even if initial DB connection fails', t 
 		.on('request', req => req.end());
 });
 
-test.cb('cacheableRequest makes request even if current DB connection fails', t => {
+test.cb('cacheableRequest makes request even if current DB connection fails (when opts.automaticFailover is enabled)', t => {
 	const cache = {
 		get: () => {
 			throw new Error();
@@ -208,7 +210,9 @@ test.cb('cacheableRequest makes request even if current DB connection fails', t 
 		}
 	};
 	const cacheableRequest = new CacheableRequest(request, cache);
-	cacheableRequest(url.parse(s.url), res => {
+	const opts = url.parse(s.url);
+	opts.automaticFailover = true;
+	cacheableRequest(opts, res => {
 		t.is(res.statusCode, 200);
 		t.end();
 	})

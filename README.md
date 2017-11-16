@@ -21,7 +21,7 @@
 - In memory cache by default
 - Official support for Redis, MongoDB, SQLite, PostgreSQL and MySQL storage adapters
 - Easily plug in your own or third-party storage adapters
-- If DB connection fails, cache is automatically bypassed
+- If DB connection fails, cache is automatically bypassed ([disabled by default](#optsautomaticfailover))
 - Adds cache support to any existing HTTP code with minimal changes
 - Uses [http-cache-semantics](https://github.com/pornel/http-cache-semantics) internally for HTTP RFC 7234 compliance
 
@@ -133,6 +133,13 @@ Default: `false`
 If set to `false`, after a cached resource's TTL expires it is kept in the cache and will be revalidated on the next request with `If-None-Match`/`If-Modified-Since` headers.
 
 If set to `true` once a cached resource has expired it is deleted and will have to be re-requested.
+
+###### opts.automaticFailover
+
+Type: `boolean`<br>
+Default: `false`
+
+When set to `true`, if the DB connection fails we will automatically fallback to a network request. DB errors will still be emitted to notify you of the problem even though the request callback may succeed.
 
 ##### cb
 
