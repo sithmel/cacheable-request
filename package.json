@@ -1,6 +1,6 @@
 {
 	"name": "cacheable-request",
-	"version": "4.0.0",
+	"version": "4.0.1",
 	"description": "Wrap native HTTP requests with RFC compliant cache support",
 	"license": "MIT",
 	"repository": "lukechilds/cacheable-request",
