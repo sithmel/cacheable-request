@@ -320,7 +320,7 @@ test('Setting opts.cache to false bypasses cache for a single request', async t 
 	const cacheableRequest = new CacheableRequest(request, cache);
 	const cacheableRequestHelper = promisify(cacheableRequest);
 	const opts = url.parse(s.url + endpoint);
-	const optsNoCache = Object.assign({ cache: false }, opts);
+	const optsNoCache = { cache: false, ...opts };
 
 	const firstResponse = await cacheableRequestHelper(opts);
 	const secondResponse = await cacheableRequestHelper(opts);
@@ -347,7 +347,7 @@ test('TTL is passed to cache', async t => {
 	};
 	const cacheableRequest = new CacheableRequest(request, cache);
 	const cacheableRequestHelper = promisify(cacheableRequest);
-	const opts = Object.assign({ strictTtl: true }, url.parse(s.url + endpoint));
+	const opts = { strictTtl: true, ...url.parse(s.url + endpoint) };
 
 	t.plan(2);
 
@@ -367,7 +367,7 @@ test('TTL is not passed to cache if strictTtl is false', async t => {
 	};
 	const cacheableRequest = new CacheableRequest(request, cache);
 	const cacheableRequestHelper = promisify(cacheableRequest);
-	const opts = Object.assign({ strictTtl: false }, url.parse(s.url + endpoint));
+	const opts = { strictTtl: false, ...url.parse(s.url + endpoint) };
 
 	t.plan(1);
 
@@ -487,7 +487,7 @@ test('Keyv cache adapters load via connection uri', async t => {
 	const cacheableRequest = new CacheableRequest(request, 'sqlite://test/testdb.sqlite');
 	const cacheableRequestHelper = promisify(cacheableRequest);
 	const db = new sqlite3.Database('test/testdb.sqlite');
-	const query = pify(db.all).bind(db);
+	const query = pify(db.all.bind(db));
 
 	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
 	await delay(1000);
