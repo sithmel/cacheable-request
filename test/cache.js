@@ -350,10 +350,10 @@ test('TTL is passed to cache', async t => {
 	const store = new Map();
 	const cache = {
 		get: store.get.bind(store),
-		set: (key, val, ttl) => {
-			t.true(typeof ttl === 'number');
+		set: (key, value, ttl) => {
+			t.is(typeof ttl, 'number');
 			t.true(ttl > 0);
-			return store.set(key, val, ttl);
+			return store.set(key, value, ttl);
 		},
 		delete: store.delete.bind(store)
 	};
@@ -371,15 +371,86 @@ test('TTL is not passed to cache if strictTtl is false', async t => {
 	const store = new Map();
 	const cache = {
 		get: store.get.bind(store),
-		set: (key, val, ttl) => {
+		set: (key, value, ttl) => {
 			t.true(typeof ttl === 'undefined');
-			return store.set(key, val, ttl);
+			return store.set(key, value, ttl);
 		},
 		delete: store.delete.bind(store)
 	};
 	const cacheableRequest = new CacheableRequest(request, cache);
 	const cacheableRequestHelper = promisify(cacheableRequest);
 	const opts = { strictTtl: false, ...url.parse(s.url + endpoint) };
+
+	t.plan(1);
+
+	await cacheableRequestHelper(opts);
+});
+
+test('Setting opts.maxTtl will limit the TTL', async t => {
+	const endpoint = '/cache';
+	const store = new Map();
+	const cache = {
+		get: store.get.bind(store),
+		set: (key, value, ttl) => {
+			t.is(ttl, 1000);
+			return store.set(key, value, ttl);
+		},
+		delete: store.delete.bind(store)
+	};
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
+	const opts = {
+		...url.parse(s.url + endpoint),
+		maxTtl: 1000
+	};
+
+	t.plan(1);
+
+	await cacheableRequestHelper(opts);
+});
+
+test('Setting opts.maxTtl when opts.strictTtl is true will use opts.maxTtl if it\'s smaller', async t => {
+	const endpoint = '/cache';
+	const store = new Map();
+	const cache = {
+		get: store.get.bind(store),
+		set: (key, value, ttl) => {
+			t.true(ttl === 1000);
+			return store.set(key, value, ttl);
+		},
+		delete: store.delete.bind(store)
+	};
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
+	const opts = {
+		...url.parse(s.url + endpoint),
+		strictTtl: true,
+		maxTtl: 1000
+	};
+
+	t.plan(1);
+
+	await cacheableRequestHelper(opts);
+});
+
+test('Setting opts.maxTtl when opts.strictTtl is true will use remote TTL if it\'s smaller', async t => {
+	const endpoint = '/cache';
+	const store = new Map();
+	const cache = {
+		get: store.get.bind(store),
+		set: (key, value, ttl) => {
+			t.true(ttl < 100000);
+			return store.set(key, value, ttl);
+		},
+		delete: store.delete.bind(store)
+	};
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
+	const opts = {
+		...url.parse(s.url + endpoint),
+		strictTtl: true,
+		maxTtl: 100000
+	};
 
 	t.plan(1);
 
