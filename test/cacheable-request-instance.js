@@ -195,6 +195,79 @@ test.cb('cacheableRequest emits RequestError if request function throws', t => {
 		.on('request', req => req.end());
 });
 
+test.cb('cacheableRequest does not cache response if request is aborted before receiving first byte of response', t => {
+	/* eslint-disable max-nested-callbacks */
+	// eslint-disable-next-line promise/prefer-await-to-then
+	createTestServer().then(s => {
+		s.get('/delay-start', (req, res) => {
+			setTimeout(() => {
+				res.setHeader('cache-control', 'max-age=60');
+				res.end('hi');
+			}, 50);
+		});
+
+		const cacheableRequest = new CacheableRequest(request);
+		const opts = url.parse(s.url);
+		opts.path = '/delay-start';
+		cacheableRequest(opts)
+			.on('request', req => {
+				req.end();
+
+				setTimeout(() => {
+					req.abort();
+				}, 20);
+
+				setTimeout(() => {
+					cacheableRequest(opts, async response => {
+						t.is(response.fromCache, false);
+
+						const body = await getStream(response);
+						t.is(body, 'hi');
+						t.end();
+					}).on('request', req => req.end());
+				}, 100);
+			});
+	});
+	/* eslint-enable max-nested-callbacks */
+});
+
+test.cb('cacheableRequest does not cache response if request is aborted after receiving part of the response', t => {
+	/* eslint-disable max-nested-callbacks */
+	// eslint-disable-next-line promise/prefer-await-to-then
+	createTestServer().then(s => {
+		s.get('/delay-partial', (req, res) => {
+			res.setHeader('cache-control', 'max-age=60');
+			res.write('h');
+			setTimeout(() => {
+				res.end('i');
+			}, 50);
+		});
+
+		const cacheableRequest = new CacheableRequest(request);
+		const opts = url.parse(s.url);
+		opts.path = '/delay-partial';
+		cacheableRequest(opts)
+			.on('request', req => {
+				req.end();
+
+				setTimeout(() => {
+					req.abort();
+				}, 20);
+
+				setTimeout(() => {
+					cacheableRequest(opts, async response => {
+						t.is(response.fromCache, false);
+
+						const body = await getStream(response);
+						t.is(body, 'hi');
+						t.end();
+					}).on('request', req => req.end());
+				}, 100);
+			});
+	});
+	/* eslint-enable max-nested-callbacks */
+});
+
 test.cb('cacheableRequest makes request even if initial DB connection fails (when opts.automaticFailover is enabled)', t => {
 	const cacheableRequest = new CacheableRequest(request, 'sqlite://non/existent/database.sqlite');
 	const opts = url.parse(s.url);
