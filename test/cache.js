@@ -486,7 +486,9 @@ test('Stale cache entries with ETag headers are revalidated', async t => {
 
 	t.is(cache.size, 1);
 	t.is(firstResponse.statusCode, 200);
-	t.is(secondResponse.statusCode, 304);
+	t.is(secondResponse.statusCode, 200);
+	t.false(firstResponse.fromCache);
+	t.true(secondResponse.fromCache);
 	t.is(firstResponse.body, 'etag');
 	t.is(firstResponse.body, secondResponse.body);
 });
