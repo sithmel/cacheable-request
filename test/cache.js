@@ -468,7 +468,9 @@ test('Stale cache entries with Last-Modified headers are revalidated', async t =
 
 	t.is(cache.size, 1);
 	t.is(firstResponse.statusCode, 200);
-	t.is(secondResponse.statusCode, 304);
+	t.is(secondResponse.statusCode, 200);
+	t.false(firstResponse.fromCache);
+	t.true(secondResponse.fromCache);
 	t.is(firstResponse.body, 'last-modified');
 	t.is(firstResponse.body, secondResponse.body);
 });
