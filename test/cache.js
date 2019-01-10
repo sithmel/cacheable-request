@@ -553,7 +553,7 @@ test('Keyv cache adapters load via connection uri', async t => {
 	t.true(secondResponse.fromCache);
 	t.is(cacheResult.length, 1);
 
-	await query(`DELETE FROM keyv`);
+	await query('DELETE FROM keyv');
 });
 
 test('ability to force refresh', async t => {

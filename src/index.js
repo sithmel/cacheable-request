@@ -128,16 +128,16 @@ class CacheableRequest {
 								}
 
 								await this.cache.set(key, value, ttl);
-							} catch (err) {
-								ee.emit('error', new CacheableRequest.CacheError(err));
+							} catch (error) {
+								ee.emit('error', new CacheableRequest.CacheError(error));
 							}
 						})();
 					} else if (opts.cache && revalidate) {
 						(async () => {
 							try {
 								await this.cache.delete(key);
-							} catch (err) {
-								ee.emit('error', new CacheableRequest.CacheError(err));
+							} catch (error) {
+								ee.emit('error', new CacheableRequest.CacheError(error));
 							}
 						})();
 					}
@@ -153,8 +153,8 @@ class CacheableRequest {
 					req.once('error', requestErrorCallback);
 					req.once('abort', requestErrorCallback);
 					ee.emit('request', req);
-				} catch (err) {
-					ee.emit('error', new CacheableRequest.RequestError(err));
+				} catch (error) {
+					ee.emit('error', new CacheableRequest.RequestError(error));
 				}
 			};
 
@@ -189,11 +189,11 @@ class CacheableRequest {
 
 				try {
 					await get(opts);
-				} catch (err) {
+				} catch (error) {
 					if (opts.automaticFailover && !madeRequest) {
 						makeRequest(opts);
 					}
-					ee.emit('error', new CacheableRequest.CacheError(err));
+					ee.emit('error', new CacheableRequest.CacheError(error));
 				}
 			})();
 
