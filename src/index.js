@@ -57,7 +57,8 @@ class CacheableRequest {
 				urlLib.format(url),
 				{
 					stripWWW: false,
-					removeTrailingSlash: false
+					removeTrailingSlash: false,
+					stripAuthentication: false
 				}
 			);
 			const key = `${opts.method}:${normalizedUrlString}`;
