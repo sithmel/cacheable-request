@@ -71,8 +71,10 @@ class CacheableRequest {
 
 				const requestErrorPromise = new Promise(resolve => {
 					requestErrorCallback = () => {
-						requestErrored = true;
-						resolve();
+						if (!requestErrored) {
+							requestErrored = true;
+							resolve();
+						}
 					};
 				});
 
