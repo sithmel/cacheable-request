@@ -94,7 +94,7 @@ class CacheableRequest {
 					}
 
 					let clonedResponse;
-					if (opts.cache && response.cachePolicy.storable()) {
+					if (opts.cache && response.cachePolicy.storable() && (!response.fromCache || revalidate.statusCode !== 304)) {
 						clonedResponse = cloneResponse(response);
 
 						(async () => {
