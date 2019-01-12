@@ -188,7 +188,7 @@ test.cb('cacheableRequest emits RequestError if request function throws', t => {
 	cacheableRequest(opts)
 		.on('error', err => {
 			t.true(err instanceof CacheableRequest.RequestError);
-			if (process.version.includes("v8.")){
+			if (process.version.includes('v8.')) {
 				t.is(err.message, 'The header content contains invalid characters');
 			} else {
 				t.is(err.message, 'Invalid character in header content ["invalid"]');
