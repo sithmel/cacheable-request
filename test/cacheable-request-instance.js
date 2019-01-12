@@ -164,7 +164,6 @@ test.cb('cacheableRequest emits CacheError if cache.delete errors', t => {
 			res.setHeader('Cache-Control', cc);
 			res.end('hi');
 		});
-		await s.listen(s.port);
 
 		cacheableRequest(s.url, () => {
 			// This needs to happen in next tick so cache entry has time to be stored

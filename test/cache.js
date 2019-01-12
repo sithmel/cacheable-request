@@ -108,8 +108,6 @@ test.before('setup', async () => {
 			body
 		});
 	});
-
-	await s.listen(s.port);
 });
 
 test('Non cacheable responses are not cached', async t => {
@@ -146,7 +144,6 @@ test('Cacheable responses have unique cache key', async t => {
 
 	const firstResponse = await cacheableRequestHelper(s.url + endpoint + '?foo');
 	const secondResponse = await cacheableRequestHelper(s.url + endpoint + '?bar');
-
 	t.is(cache.size, 2);
 	t.not(firstResponse.body, secondResponse.body);
 });
@@ -162,7 +159,7 @@ async function testCacheKey(t, input, expected) {
 	};
 	const cacheableRequest = new CacheableRequest(request, cache);
 	const cacheableRequestHelper = promisify(cacheableRequest);
-	await t.throws(
+	await t.throwsAsync(
 		cacheableRequestHelper(input),
 		CacheableRequest.CacheError,
 		okMessage
