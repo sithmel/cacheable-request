@@ -138,13 +138,11 @@ class CacheableRequest {
 							ee.emit('error', new CacheableRequest.CacheError(error));
 						}
 					} else if (opts.cache && revalidate) {
-
 						try {
 							await this.cache.delete(key);
 						} catch (error) {
 							ee.emit('error', new CacheableRequest.CacheError(error));
 						}
-
 					}
 
 					ee.emit('response', clonedResponse || response);
