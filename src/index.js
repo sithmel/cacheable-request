@@ -45,7 +45,7 @@ const prepareOptsAndURL = opts => {
 		}
 	);
 	return [opts, normalizedUrlString];
-}
+};
 
 const getCachedResponse = async (opts, cache, key) => {
 	await Promise.resolve();
@@ -67,8 +67,7 @@ const getCachedResponse = async (opts, cache, key) => {
 	return { cacheEntry, policy };
 };
 
-const makeRequest = (request, revalidate, opts, madeRequest, cache, key, ee, cb) => {
-	madeRequest = true;
+const makeRequest = (request, revalidate, opts, cache, key, ee, cb) => {
 	let requestErrored = false;
 	let requestErrorCallback;
 
@@ -145,7 +144,6 @@ const makeRequest = (request, revalidate, opts, madeRequest, cache, key, ee, cb)
 		}
 	};
 
-
 	try {
 		const req = request(opts, handler);
 		req.once('error', requestErrorCallback);
@@ -180,14 +178,26 @@ class CacheableRequest {
 			const ee = new EventEmitter();
 			const key = `${opts.method}:${normalizedUrlString}`;
 			let revalidate = false;
-			let madeRequest = false;
 
 			// This is a small memory leak. Need to correct it.
 			this.cache.on('error', err => ee.emit('error', new CacheableRequest.CacheError(err)));
 
 			(async () => {
+				let data;
+				
 				try {
-					const data = await getCachedResponse(opts, this.cache, key);
+					data = await getCachedResponse(opts, this.cache, key);
+				} catch (error) {
+					// There was an error getting data from cache.
+					if (opts.automaticFailover) {
+						makeRequest(request, revalidate, opts, this.cache, key, ee, cb);
+					}
+					// Emit the error about cache.
+					ee.emit('error', new CacheableRequest.CacheError(error));
+					return;
+				}
+
+				try {
 					if (data.response) {
 					// Response is found in cache and it's VALID response.
 					// no need to make request. return the response from cache.
@@ -202,19 +212,12 @@ class CacheableRequest {
 
 						revalidate = data.cacheEntry;
 						opts.headers = data.policy.revalidationHeaders(opts);
-						makeRequest(request, revalidate, opts, madeRequest, this.cache, key, ee, cb);
+						makeRequest(request, revalidate, opts, this.cache, key, ee, cb);
 					} else {
 					// Response is NOT FOUND in cache. Making normal request.
-						makeRequest(request, revalidate, opts, madeRequest, this.cache, key, ee, cb);
+						makeRequest(request, revalidate, opts, this.cache, key, ee, cb);
 					}
 				} catch (error) {
-					if (opts.automaticFailover && !madeRequest) {
-					// Request is not fired and automaticfailver is set.
-					// this typically happens when cache can't be obtained from store.
-					// we will make normal request without waiting for cache.
-						makeRequest(request, revalidate, opts, madeRequest, this.cache, key, ee, cb);
-					}
-					// This still emits error about cache.
 					ee.emit('error', new CacheableRequest.CacheError(error));
 				}
 			})();
