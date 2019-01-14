@@ -2,12 +2,13 @@
 
 const EventEmitter = require('events');
 const urlLib = require('url');
+const { PassThrough } = require('stream');
 const normalizeUrl = require('normalize-url');
 const getStream = require('get-stream');
 const CachePolicy = require('http-cache-semantics');
 const Response = require('responselike');
 const lowercaseKeys = require('lowercase-keys');
-const PassThrough = require('stream').PassThrough;
+
 const mimicResponse = require('mimic-response');
 const Keyv = require('keyv');
 
@@ -259,7 +260,7 @@ function cloneResponse(response) {
 	mimicResponse(response, clone);
 
 	return response.pipe(clone);
-};
+}
 
 CacheableRequest.RequestError = class extends Error {
 	constructor(err) {
