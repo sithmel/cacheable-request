@@ -7,7 +7,8 @@ const getStream = require('get-stream');
 const CachePolicy = require('http-cache-semantics');
 const Response = require('responselike');
 const lowercaseKeys = require('lowercase-keys');
-const cloneResponse = require('clone-response');
+const PassThrough = require('stream').PassThrough;
+const mimicResponse = require('mimic-response');
 const Keyv = require('keyv');
 
 const prepareOptsAndURL = opts => {
@@ -248,6 +249,17 @@ function normalizeUrlObject(url) {
 		search: url.search
 	};
 }
+
+function cloneResponse(response) {
+	if (!(response && response.pipe)) {
+		throw new TypeError('Parameter `response` must be a response stream.');
+	}
+
+	const clone = new PassThrough();
+	mimicResponse(response, clone);
+
+	return response.pipe(clone);
+};
 
 CacheableRequest.RequestError = class extends Error {
 	constructor(err) {
