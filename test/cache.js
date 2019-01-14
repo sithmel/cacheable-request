@@ -162,7 +162,7 @@ async function testCacheKey(t, input, expected) {
 	};
 	const cacheableRequest = new CacheableRequest(request, cache);
 	const cacheableRequestHelper = promisify(cacheableRequest);
-	await t.throws(
+	await t.throwsAsync(
 		cacheableRequestHelper(input),
 		CacheableRequest.CacheError,
 		okMessage
