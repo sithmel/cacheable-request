@@ -164,7 +164,6 @@ test.cb('cacheableRequest emits CacheError if cache.delete errors', t => {
 			res.setHeader('Cache-Control', cc);
 			res.end('hi');
 		});
-		await s.listen(s.port);
 
 		cacheableRequest(s.url, () => {
 			// This needs to happen in next tick so cache entry has time to be stored
@@ -189,7 +188,6 @@ test.cb('cacheableRequest emits RequestError if request function throws', t => {
 	cacheableRequest(opts)
 		.on('error', err => {
 			t.true(err instanceof CacheableRequest.RequestError);
-			t.is(err.message, 'The header content contains invalid characters');
 			t.end();
 		})
 		.on('request', req => req.end());

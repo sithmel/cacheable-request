@@ -16,6 +16,10 @@ const promisify = cacheableRequest => opts => new Promise((resolve, reject) => {
 	cacheableRequest(opts, async response => {
 		const body = await getStream(response);
 		response.body = body;
+
+		// Give the cache time to update
+		await delay(100);
+
 		resolve(response);
 	})
 		.on('request', req => req.end())
@@ -108,8 +112,6 @@ test.before('setup', async () => {
 			body
 		});
 	});
-
-	await s.listen(s.port);
 });
 
 test('Non cacheable responses are not cached', async t => {
