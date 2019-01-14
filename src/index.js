@@ -47,6 +47,26 @@ function prepareOptsAndURL(opts) {
 	return [opts, normalizedUrlString];
 }
 
+const getCachedResponse = async (opts, cache, key) => {
+	await Promise.resolve();
+
+	const cacheEntry = opts.cache ? await cache.get(key) : undefined;
+	if (typeof cacheEntry === 'undefined') {
+		return {};
+	}
+
+	const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
+	if (policy.satisfiesWithoutRevalidation(opts) && !opts.forceRefresh) {
+		const headers = policy.responseHeaders();
+		const response = new Response(cacheEntry.statusCode, headers, cacheEntry.body, cacheEntry.url);
+		response.cachePolicy = policy;
+		response.fromCache = true;
+
+		return { response };
+	}
+	return { cacheEntry, policy };
+};
+
 class CacheableRequest {
 	constructor(request, cacheAdapter) {
 		if (typeof request !== 'function') {
@@ -161,40 +181,42 @@ class CacheableRequest {
 				}
 			};
 
-			const get = async opts => {
-				await Promise.resolve();
-
-				const cacheEntry = opts.cache ? await this.cache.get(key) : undefined;
-				if (typeof cacheEntry === 'undefined') {
-					return makeRequest(opts);
-				}
-
-				const policy = CachePolicy.fromObject(cacheEntry.cachePolicy);
-				if (policy.satisfiesWithoutRevalidation(opts) && !opts.forceRefresh) {
-					const headers = policy.responseHeaders();
-					const response = new Response(cacheEntry.statusCode, headers, cacheEntry.body, cacheEntry.url);
-					response.cachePolicy = policy;
-					response.fromCache = true;
-
-					ee.emit('response', response);
-					if (typeof cb === 'function') {
-						cb(response);
-					}
-				} else {
-					revalidate = cacheEntry;
-					opts.headers = policy.revalidationHeaders(opts);
-					makeRequest(opts);
-				}
-			};
-
+			// This is a small memory leak. Need to correct it.
 			this.cache.on('error', err => ee.emit('error', new CacheableRequest.CacheError(err)));
 
-			get(opts).catch(error => {
-				if (opts.automaticFailover && !madeRequest) {
-					makeRequest(opts);
+			(async () => {
+				try {
+					const data = await getCachedResponse(opts, this.cache, key);
+					if (data.response) {
+					// Response is found in cache and it's valid response.
+					// no need to make request. return the response from cache.
+
+						ee.emit('response', data.response);
+						if (typeof cb === 'function') {
+							cb(data.response);
+						}
+					} else if (data.cacheEntry) {
+					// Response is found in cache but we need to revalidate it.
+					// setting appropriate headers and making request to revalidate.
+
+						revalidate = data.cacheEntry;
+						opts.headers = data.policy.revalidationHeaders(opts);
+						makeRequest(opts);
+					} else {
+					// Response is not found in cache. Making normal request.
+						makeRequest(opts);
+					}
+				} catch (error) {
+					if (opts.automaticFailover && !madeRequest) {
+					// Request is not fired and automaticfailver is set.
+					// this typically happens when cache can't be obtained from store.
+					// we will make normal request without waiting for cache.
+						makeRequest(opts);
+					}
+					// This still emits error about cache.
+					ee.emit('error', new CacheableRequest.CacheError(error));
 				}
-				ee.emit('error', new CacheableRequest.CacheError(error));
-			});
+			})();
 
 			return ee;
 		};
