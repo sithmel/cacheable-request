@@ -184,7 +184,7 @@ class CacheableRequest {
 
 			(async () => {
 				let data;
-				
+
 				try {
 					data = await getCachedResponse(opts, this.cache, key);
 				} catch (error) {
@@ -197,28 +197,24 @@ class CacheableRequest {
 					return;
 				}
 
-				try {
-					if (data.response) {
-					// Response is found in cache and it's VALID response.
-					// no need to make request. return the response from cache.
+				if (data.response) {
+				// Response is found in cache and it's VALID response.
+				// no need to make request. return the response from cache.
 
-						ee.emit('response', data.response);
-						if (typeof cb === 'function') {
-							cb(data.response);
-						}
-					} else if (data.cacheEntry) {
-					// Response is found in cache but we need to REVALIDATE it.
-					// setting appropriate headers and making request to revalidate.
-
-						revalidate = data.cacheEntry;
-						opts.headers = data.policy.revalidationHeaders(opts);
-						makeRequest(request, revalidate, opts, this.cache, key, ee, cb);
-					} else {
-					// Response is NOT FOUND in cache. Making normal request.
-						makeRequest(request, revalidate, opts, this.cache, key, ee, cb);
+					ee.emit('response', data.response);
+					if (typeof cb === 'function') {
+						cb(data.response);
 					}
-				} catch (error) {
-					ee.emit('error', new CacheableRequest.CacheError(error));
+				} else if (data.cacheEntry) {
+				// Response is found in cache but we need to REVALIDATE it.
+				// setting appropriate headers and making request to revalidate.
+
+					revalidate = data.cacheEntry;
+					opts.headers = data.policy.revalidationHeaders(opts);
+					makeRequest(request, revalidate, opts, this.cache, key, ee, cb);
+				} else {
+				// Response is NOT FOUND in cache. Making normal request.
+					makeRequest(request, revalidate, opts, this.cache, key, ee, cb);
 				}
 			})();
 
