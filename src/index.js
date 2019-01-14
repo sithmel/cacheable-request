@@ -41,6 +41,7 @@ class CacheableRequest {
 					'';
 				url = normalizeUrlObject({ ...opts, pathname, search });
 			}
+
 			opts = {
 				headers: {},
 				method: 'GET',
@@ -128,16 +129,16 @@ class CacheableRequest {
 								}
 
 								await this.cache.set(key, value, ttl);
-							} catch (err) {
-								ee.emit('error', new CacheableRequest.CacheError(err));
+							} catch (error) {
+								ee.emit('error', new CacheableRequest.CacheError(error));
 							}
 						})();
 					} else if (opts.cache && revalidate) {
 						(async () => {
 							try {
 								await this.cache.delete(key);
-							} catch (err) {
-								ee.emit('error', new CacheableRequest.CacheError(err));
+							} catch (error) {
+								ee.emit('error', new CacheableRequest.CacheError(error));
 							}
 						})();
 					}
@@ -153,8 +154,8 @@ class CacheableRequest {
 					req.once('error', requestErrorCallback);
 					req.once('abort', requestErrorCallback);
 					ee.emit('request', req);
-				} catch (err) {
-					ee.emit('error', new CacheableRequest.RequestError(err));
+				} catch (error) {
+					ee.emit('error', new CacheableRequest.RequestError(error));
 				}
 			};
 
@@ -185,15 +186,16 @@ class CacheableRequest {
 					}
 				};
 
-				this.cache.on('error', err => ee.emit('error', new CacheableRequest.CacheError(err)));
+				this.cache.on('error', error => ee.emit('error', new CacheableRequest.CacheError(error)));
 
 				try {
 					await get(opts);
-				} catch (err) {
+				} catch (error) {
 					if (opts.automaticFailover && !madeRequest) {
 						makeRequest(opts);
 					}
-					ee.emit('error', new CacheableRequest.CacheError(err));
+
+					ee.emit('error', new CacheableRequest.CacheError(error));
 				}
 			})();
 
@@ -229,18 +231,18 @@ function normalizeUrlObject(url) {
 }
 
 CacheableRequest.RequestError = class extends Error {
-	constructor(err) {
-		super(err.message);
+	constructor(error) {
+		super(error.message);
 		this.name = 'RequestError';
-		Object.assign(this, err);
+		Object.assign(this, error);
 	}
 };
 
 CacheableRequest.CacheError = class extends Error {
-	constructor(err) {
-		super(err.message);
+	constructor(error) {
+		super(error.message);
 		this.name = 'CacheError';
-		Object.assign(this, err);
+		Object.assign(this, error);
 	}
 };
 

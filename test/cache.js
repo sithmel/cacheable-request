@@ -168,6 +168,7 @@ async function testCacheKey(t, input, expected) {
 		okMessage
 	);
 }
+
 testCacheKey.title = (providedTitle, input) => util.format(
 	'Cache key is http.request compatible for arg %s(%j)%s',
 	input.constructor.name,
@@ -299,6 +300,7 @@ test('request options path query is passed through', async t => {
 		port: urlObject.port,
 		path: urlObject.path
 	};
+
 	const inputs = [argString, argURL, argOptions];
 	for (const input of inputs) {
 		// eslint-disable-next-line no-await-in-loop
@@ -553,7 +555,7 @@ test('Keyv cache adapters load via connection uri', async t => {
 	t.true(secondResponse.fromCache);
 	t.is(cacheResult.length, 1);
 
-	await query(`DELETE FROM keyv`);
+	await query('DELETE FROM keyv');
 });
 
 test('ability to force refresh', async t => {

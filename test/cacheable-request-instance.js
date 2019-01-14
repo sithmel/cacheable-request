@@ -93,7 +93,7 @@ test.cb('cacheableRequest emits response event for cached responses', t => {
 });
 
 test.cb('cacheableRequest emits CacheError if cache adapter connection errors', t => {
-	const cacheableRequest = new CacheableRequest(request, `sqlite://non/existent/database.sqlite`);
+	const cacheableRequest = new CacheableRequest(request, 'sqlite://non/existent/database.sqlite');
 	cacheableRequest(url.parse(s.url))
 		.on('error', err => {
 			t.true(err instanceof CacheableRequest.CacheError);
