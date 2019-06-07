@@ -186,7 +186,9 @@ class CacheableRequest {
 					}
 				};
 
-				this.cache.on('error', error => ee.emit('error', new CacheableRequest.CacheError(error)));
+				const errorHandler = error => ee.emit('error', new CacheableRequest.CacheError(error));
+				this.cache.once('error', errorHandler);
+				ee.on('response', () => this.cache.removeListener('error', errorHandler));
 
 				try {
 					await get(opts);
