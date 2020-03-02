@@ -102,6 +102,18 @@ test.before('setup', async () => {
 		res.end('cache-then-no-store-on-revalidate');
 	});
 
+	let cacheThenError = 0;
+	s.get('/stale-if-error', (req, res) => {
+		if (cacheThenError === 0) {
+			res.setHeader('Cache-Control', 'public, max-age=1, stale-if-error=10');
+			res.end('cache-then-fail');
+		} else {
+			res.status('500');
+			res.send('Server error');
+		}
+		cacheThenError++;
+	});
+
 	s.get('/echo', (req, res) => {
 		const { headers, query, path, originalUrl, body } = req;
 		res.json({
@@ -498,6 +510,24 @@ test('Stale cache entries that can\'t be revalidate are deleted from cache', asy
 	t.is(firstResponse.statusCode, 200);
 	t.is(secondResponse.statusCode, 200);
 	t.is(firstResponse.body, 'cache-then-no-store-on-revalidate');
+	t.is(firstResponse.body, secondResponse.body);
+});
+
+test('Stale cache entries that can be reused when response is 500', async t => {
+	const endpoint = '/stale-if-error';
+	const cache = new Map();
+	const cacheableRequest = new CacheableRequest(request, cache);
+	const cacheableRequestHelper = promisify(cacheableRequest);
+
+	const firstResponse = await cacheableRequestHelper(s.url + endpoint);
+	t.is(cache.size, 1);
+	await delay(2000);
+	const secondResponse = await cacheableRequestHelper(s.url + endpoint);
+
+	t.is(cache.size, 1);
+	t.is(firstResponse.statusCode, 200);
+	t.is(secondResponse.statusCode, 200);
+	t.is(firstResponse.body, 'cache-then-fail');
 	t.is(firstResponse.body, secondResponse.body);
 });
 
